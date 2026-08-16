@@ -1,0 +1,44 @@
+{% extends 'base.html' %}
+
+{% block content %}
+
+<div class="card shadow-sm">
+    <div class="card-body">
+
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <div>
+                <h3>Editar Categoría</h3>
+                <p class="text-muted mb-0">Modificar categoría de insumo.</p>
+            </div>
+
+            <a href="{% url 'categorias' %}" class="btn btn-secondary">
+                Volver
+            </a>
+        </div>
+
+        <hr>
+
+        <form method="POST">
+            {% csrf_token %}
+
+            <div class="mb-3">
+                <label class="form-label">Nombre</label>
+                {{ form.nombre_categoria }}
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label">Descripción</label>
+                {{ form.descripcion }}
+            </div>
+
+            <hr>
+
+            <button type="submit" class="btn btn-primary">
+                Guardar Cambios
+            </button>
+        </form>
+
+    </div>
+</div>
+
+{% endblock %}

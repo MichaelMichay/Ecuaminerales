@@ -1,0 +1,40 @@
+{% extends 'base.html' %}
+
+{% block content %}
+
+<div class="card shadow-sm">
+    <div class="card-body">
+
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <div>
+                <h3>Crear Rol</h3>
+                <p class="text-muted mb-0">Registro de roles del sistema.</p>
+            </div>
+
+            <a href="{% url 'roles' %}" class="btn btn-secondary">
+                Volver
+            </a>
+        </div>
+
+        <hr>
+
+        <form method="POST">
+            {% csrf_token %}
+
+            <div class="mb-3">
+                <label class="form-label">Nombre del rol</label>
+                {{ form.nombre_rol }}
+            </div>
+
+            <hr>
+
+            <button type="submit" class="btn btn-primary">
+                Guardar Rol
+            </button>
+
+        </form>
+
+    </div>
+</div>
+
+{% endblock %}

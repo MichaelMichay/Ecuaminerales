@@ -1,0 +1,158 @@
+{% extends 'base.html' %}
+
+{% block content %}
+  <div class="card shadow-sm">
+    <div class="card-body">
+      <h3>Trazabilidad Operacional</h3>
+
+      <p class="text-muted">Seguimiento completo.</p>
+
+      <div class="mb-3 text-end">
+        <a href="{% url 'trazabilidad_pdf' %}" class="btn btn-danger">Exportar PDF</a>
+
+        <a href="{% url 'trazabilidad_excel' %}" class="btn btn-success">Exportar Excel</a>
+      </div>
+
+      <hr />
+
+      <div class="row mb-4">
+        <div class="col-md-5">
+          <input type="text" id="buscarTrazabilidad" class="form-control" placeholder="Buscar por código, perforista, bodeguero o polvorinero..." />
+        </div>
+      </div>
+      <div class="table-responsive">
+        <div class="timeline-operacional" id="contenedorTrazabilidad">
+          {% for item in trazabilidad %}
+            <div class="timeline-card">
+              <div class="timeline-header">
+                <div>
+                  <h5 class="mb-1">{{ item.orden.codigo_orden }}</h5>
+
+                  <small class="text-muted">
+                    Fecha solicitud:
+                    {{ item.orden.fecha_orden|date:'d/m/Y H:i' }}
+                  </small>
+                </div>
+
+                <div>
+                  {% if item.entrega and item.entrega.estado == 'ENTREGADO' %}
+                    <span class="badge bg-success px-3 py-2">COMPLETADO</span>
+                  {% elif item.entrega and item.entrega.estado == 'RECHAZADO' %}
+                    <span class="badge bg-danger px-3 py-2">RECHAZADO EN POLVORÍN</span>
+                  {% elif item.despacho %}
+                    <span class="badge bg-info text-dark px-3 py-2">DESPACHADO</span>
+                  {% else %}
+                    <span class="badge bg-warning text-dark px-3 py-2">PENDIENTE</span>
+                  {% endif %}
+                </div>
+              </div>
+
+              <div class="timeline-body">
+                <div class="timeline-step success">
+                  <div class="timeline-icon">
+                    <i class="bi bi-person-check-fill"></i>
+                  </div>
+
+                  <div>
+                    <strong>Solicitud del Perforista</strong>
+
+                    <p class="mb-1">{{ item.orden.perforista.username }}</p>
+
+                    <small class="text-muted">
+                      {{ item.orden.cantidad_tiros }} tiros solicitados
+                      <br />
+                      Mecha: {{ item.orden.metros_mecha }} m por tiro
+                    </small>
+                  </div>
+                </div>
+
+                <div class="timeline-line"></div>
+
+                <div class="timeline-step primary">
+                  <div class="timeline-icon">
+                    <i class="bi bi-box-seam-fill"></i>
+                  </div>
+
+                  <div>
+                    <strong>Despacho de Bodega</strong>
+
+                    {% if item.despacho %}
+                      <p class="mb-1">{{ item.despacho.bodeguero.username }}</p>
+
+                      <small class="text-muted">{{ item.despacho.fecha_despacho|date:'d/m/Y H:i' }}</small>
+                    {% else %}
+                      <p class="mb-1 text-warning">Pendiente de despacho</p>
+                    {% endif %}
+                  </div>
+                </div>
+
+                <div class="timeline-line"></div>
+
+                <div class="timeline-step danger">
+                  <div class="timeline-icon">
+                    <i class="bi bi-truck"></i>
+                  </div>
+
+                  <div>
+                    <strong>Entrega de Polvorín</strong>
+
+                    {% if item.entrega %}
+                      <p class="mb-1">{{ item.entrega.polvorinero.username }}</p>
+
+                      <small class="text-muted">{{ item.entrega.fecha_entrega|date:'d/m/Y H:i' }}</small>
+                    {% else %}
+                      <p class="mb-1 text-secondary">Sin entrega registrada</p>
+                    {% endif %}
+                  </div>
+                </div>
+              </div>
+            </div>
+          {% empty %}
+            <div class="alert alert-secondary">No existen registros de trazabilidad.</div>
+          {% endfor %}
+        </div>
+
+        <p id="sinResultadosTrazabilidad" class="text-center text-muted mt-3" style="display: none;">No se encontraron registros de trazabilidad.</p>
+
+        <div class="mt-4" id="paginacionTrazabilidad">
+          {% include 'paginacion.html' %}
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const buscarTrazabilidad = document.getElementById('buscarTrazabilidad')
+    const tarjetasTrazabilidad = document.querySelectorAll('.timeline-card')
+    const sinResultadosTrazabilidad = document.getElementById('sinResultadosTrazabilidad')
+    const paginacionTrazabilidad = document.getElementById('paginacionTrazabilidad')
+    
+    buscarTrazabilidad.addEventListener('keyup', function () {
+      let filtro = this.value.toLowerCase().trim()
+      let encontrados = 0
+    
+      tarjetasTrazabilidad.forEach(function (tarjeta) {
+        let contenido = tarjeta.textContent.toLowerCase()
+    
+        if (contenido.includes(filtro)) {
+          tarjeta.style.display = ''
+          encontrados++
+        } else {
+          tarjeta.style.display = 'none'
+        }
+      })
+    
+      if (filtro.length > 0) {
+        paginacionTrazabilidad.style.display = 'none'
+      } else {
+        paginacionTrazabilidad.style.display = ''
+      }
+    
+      if (encontrados === 0 && filtro.length > 0) {
+        sinResultadosTrazabilidad.style.display = 'block'
+      } else {
+        sinResultadosTrazabilidad.style.display = 'none'
+      }
+    })
+  </script>
+{% endblock %}

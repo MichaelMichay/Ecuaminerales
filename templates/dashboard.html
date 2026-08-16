@@ -1,0 +1,261 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+
+<div class="row g-4">
+
+    <div class="col-md-3">
+        <a href="{% url 'usuarios' %}"
+           class="indicador-box text-decoration-none h-100">
+
+            <img src="{% static 'img/usuario.png' %}" class="icono-indicador">
+
+            <div>
+                <h6>Usuarios</h6>
+                <h2>{{ total_usuarios }}</h2>
+                <p>Usuarios registrados</p>
+            </div>
+
+        </a>
+    </div>
+
+    <div class="col-md-3">
+        <a href="{% url 'inventario' %}"
+           class="indicador-box text-decoration-none h-100">
+
+            <img src="{% static 'img/insumo.png' %}" class="icono-indicador">
+
+            <div>
+                <h6>Insumos</h6>
+                <h2>{{ total_insumos }}</h2>
+                <p>Materiales registrados</p>
+            </div>
+
+        </a>
+    </div>
+
+    <div class="col-md-3">
+        <a href="{% url 'despachos' %}"
+           class="indicador-box text-decoration-none h-100">
+
+            <img src="{% static 'img/eficiencia.png' %}" class="icono-indicador">
+
+            <div>
+                <h6>Eficiencia</h6>
+                <p>{{ ordenes_despachadas }} de {{ total_ordenes }} órdenes despachadas</p>
+            </div>
+
+        </a>
+    </div>
+
+    <div class="col-md-3">
+        <a href="{% url 'ordenes' %}?estado=PENDIENTE"
+           class="indicador-box text-decoration-none h-100">
+
+            <img src="{% static 'img/pendiente.png' %}" class="icono-indicador">
+
+            <div>
+                <h6>Pendientes</h6>
+                <p>{{ ordenes_pendientes }} solicitudes por revisar</p>
+            </div>
+
+        </a>
+    </div>
+
+</div>
+
+<div class="row g-4 mt-4">
+
+    <div class="col-md-6">
+        <div class="card shadow-sm h-100">
+            <div class="card-body">
+
+                <h5>Estado de Órdenes</h5>
+                <hr>
+
+                <div class="chart-box">
+                    <canvas id="ordenesChart"></canvas>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-6">
+        <div class="card shadow-sm h-100">
+            <div class="card-body">
+
+                <h5>Resumen Operativo</h5>
+                <hr>
+
+                <div class="chart-box">
+                    <canvas id="resumenChart"></canvas>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+</div>
+
+
+<div class="card mt-4 shadow-sm">
+
+    <div class="card-body">
+
+        <h5>Últimas órdenes de tiro</h5>
+        <hr>
+
+        <div class="tabla-scroll">
+
+            <table class="table table-hover">
+
+                <thead>
+                    <tr>
+                        <th>Perforista</th>
+                        <th>Cantidad de Tiros</th>
+                        <th>Lugar</th>
+                        <th>Estado</th>
+                    </tr>
+                </thead>
+
+                <tbody>
+
+                    {% for orden in ultimas_ordenes %}
+
+                    <tr>
+                        <td>{{ orden.perforista.first_name }} {{ orden.perforista.last_name }}</td>
+                        <td>{{ orden.cantidad_tiros }}</td>
+                        <td>{{ orden.lugar.nombre }}</td>
+                        <td>
+                            {% if orden.estado == 'DESPACHADA' %}
+                                <span class="badge bg-success">
+                                    {{ orden.estado }}
+                                </span>
+                            {% elif orden.estado == 'RECHAZADA' %}
+                                <span class="badge bg-danger">
+                                    {{ orden.estado }}
+                                </span>
+                            {% else %}
+                                <span class="badge bg-warning text-dark">
+                                    {{ orden.estado }}
+                                </span>
+                            {% endif %}
+                        </td>
+                    </tr>
+
+                    {% empty %}
+
+                    <tr>
+                        <td colspan="4" class="text-center text-muted">
+                            No existen órdenes registradas todavía.
+                        </td>
+                    </tr>
+
+                    {% endfor %}
+
+                </tbody>
+
+            </table>
+
+        </div>
+
+    </div>
+
+</div>
+
+<script>
+
+    const ordenesChart = document.getElementById('ordenesChart');
+
+    new Chart(ordenesChart, {
+
+        type: 'doughnut',
+
+        data: {
+            labels: [
+                'Pendientes',
+                'Despachadas',
+                'Rechazadas'
+            ],
+
+            datasets: [{
+                data: [
+                    {{ ordenes_pendientes }},
+                    {{ ordenes_despachadas }},
+                    {{ ordenes_rechazadas }}
+                ],
+
+                backgroundColor: [
+                    '#f4a261',
+                    '#198754',
+                    '#dc3545'
+                ]
+            }]
+        },
+
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+
+            plugins: {
+                legend: {
+                    display: true,
+                    position: 'top'
+                }
+            }
+        }
+
+    });
+
+    const resumenChart = document.getElementById('resumenChart');
+
+    new Chart(resumenChart, {
+
+        type: 'bar',
+
+        data: {
+            labels: [
+                'Usuarios',
+                'Insumos',
+                'Órdenes',
+                'Despachos',
+                'Stock Bajo'
+            ],
+
+            datasets: [{
+                data: [
+                    {{ total_usuarios }},
+                    {{ total_insumos }},
+                    {{ total_ordenes }},
+                    {{ total_despachos }},
+                    {{ stock_bajo }}
+                ],
+
+                backgroundColor: [
+                    '#374785',
+                    '#198754',
+                    '#f4a261',
+                    '#dc3545',
+                    '#6f42c1'
+                ]
+            }]
+        },
+
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+
+            plugins: {
+                legend: {
+                    display: false
+                }
+            }
+        }
+
+    });
+
+</script>
+
+{% endblock %}

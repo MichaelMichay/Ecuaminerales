@@ -1,0 +1,128 @@
+{% extends 'base.html' %}
+
+{% block content %}
+  <div class="card shadow-sm">
+    <div class="card-body">
+      <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+          <h3>Usuarios</h3>
+          <p class="text-muted mb-0">Usuarios del sistema.</p>
+        </div>
+
+        <a href="{% url 'crear_usuario' %}" class="btn btn-primary">Nuevo Usuario</a>
+      </div>
+
+      <hr />
+
+      <div class="row mb-4 justify-content-end">
+        <div class="col-md-5">
+          <input type="text" id="buscarUsuario" class="form-control" placeholder="Buscar usuario, nombre, correo o rol..." />
+        </div>
+      </div>
+      <div class="table-responsive tabla-usuarios-responsive">
+        <table class="table table-hover" id="tablaUsuarios">
+          <thead>
+            <tr>
+              <th>Nombres</th>
+              <th>Correo</th>
+              <th>Rol</th>
+              <th>Estado</th>
+              <th>Acciones</th>
+            </tr>
+          </thead>
+
+          <tbody>
+            {% for usuario in usuarios %}
+              <tr>
+                <td>{{ usuario.first_name }} {{ usuario.last_name }}</td>
+                <td>{{ usuario.email }}</td>
+                <td>{{ usuario.rol.nombre_rol }}</td>
+
+                <td>
+                  {% if usuario.estado %}
+                    <span class="badge bg-success">Activo</span>
+                  {% else %}
+                    <span class="badge bg-danger">Inactivo</span>
+                  {% endif %}
+                </td>
+
+                <td>
+                   <div class="d-flex gap-2">
+                  <a href="{% url 'editar_usuario' usuario.id %}" class="btn btn-sm btn-warning">Editar</a>
+                  <a href="{% url 'eliminar_usuario' usuario.id %}" class="btn btn-sm btn-danger" onclick="confirmarEliminacion(event, this.href)">Eliminar</a>
+                  <a href="{% url 'restablecer_password_usuario' usuario.id %}" class="btn btn-sm btn-secondary">Contraseña</a>
+                   </div>
+                </td>
+            
+              </tr>
+            {% empty %}
+              <tr>
+                <td colspan="6" class="text-center text-muted">No existen usuarios registrados.</td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+
+      <p id="sinResultados" class="text-center text-muted mt-3" style="display: none;">No se encontraron usuarios con esa búsqueda.</p>
+
+      <div id="paginacionUsuarios">
+        {% include 'paginacion.html' %}
+      </div>
+    </div>
+  </div>
+
+  <script>
+    function confirmarEliminacion(event, url) {
+      event.preventDefault()
+    
+      Swal.fire({
+        title: '¿Eliminar usuario?',
+        text: 'Esta acción no se puede deshacer.',
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#d33',
+        cancelButtonColor: '#6c757d',
+        confirmButtonText: 'Sí, eliminar',
+        cancelButtonText: 'Cancelar'
+      }).then((result) => {
+        if (result.isConfirmed) {
+          window.location.href = url
+        }
+      })
+    }
+    
+    const buscarUsuario = document.getElementById('buscarUsuario')
+    const filasUsuarios = document.querySelectorAll('#tablaUsuarios tbody tr')
+    const sinResultados = document.getElementById('sinResultados')
+    const paginacionUsuarios = document.getElementById('paginacionUsuarios')
+    
+    buscarUsuario.addEventListener('keyup', function () {
+      let filtro = this.value.toLowerCase().trim()
+      let encontrados = 0
+    
+      filasUsuarios.forEach(function (fila) {
+        let textoFila = fila.textContent.toLowerCase()
+    
+        if (textoFila.includes(filtro)) {
+          fila.style.display = ''
+          encontrados++
+        } else {
+          fila.style.display = 'none'
+        }
+      })
+    
+      if (filtro.length > 0) {
+        paginacionUsuarios.style.display = 'none'
+      } else {
+        paginacionUsuarios.style.display = ''
+      }
+    
+      if (encontrados === 0 && filtro.length > 0) {
+        sinResultados.style.display = 'block'
+      } else {
+        sinResultados.style.display = 'none'
+      }
+    })
+  </script>
+{% endblock %}

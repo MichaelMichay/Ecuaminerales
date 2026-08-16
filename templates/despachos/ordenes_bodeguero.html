@@ -1,0 +1,70 @@
+{% extends 'base.html' %}
+
+{% block content %}
+
+<div class="card shadow-sm">
+    <div class="card-body">
+
+        <h3>Órdenes Pendientes</h3>
+
+        <p class="text-muted">
+            Revisión de órdenes pendientes para aprobación o rechazo.
+        </p>
+
+        <hr>
+
+        <table class="table table-hover">
+            <thead>
+                <tr>
+                    <th>Código</th>
+                    <th>Perforista</th>
+                    <th>Lugar</th>
+                    <th>Tiros</th>
+                    <th>Materiales</th>
+                    <th>Acciones</th>
+                </tr>
+            </thead>
+
+            <tbody>
+                {% for item in ordenes_materiales %}
+                <tr>
+                    <td>{{ item.orden.codigo_orden }}</td>
+                    <td>{{ item.orden.perforista.username }}</td>
+                    <td>{{ item.orden.lugar.nombre }}</td>
+                    <td>{{ item.orden.cantidad_tiros }}</td>
+
+                    <td>
+                        <ul class="mb-0">
+                            <li>Dinamita: {{ item.materiales.dinamita }}</li>
+                            <li>Fulminantes: {{ item.materiales.fulminantes }}</li>
+                            <li>Mecha: {{ item.materiales.mecha }} metros</li>
+                            <li>Nitrato: {{ item.materiales.nitrato }}</li>
+                        </ul>
+                    </td>
+
+                    <td>
+                        <a href="{% url 'aprobar_orden_bodeguero' item.orden.id %}"
+                           class="btn btn-success btn-sm">
+                            Aprobar
+                        </a>
+
+                        <a href="{% url 'rechazar_orden_bodeguero' item.orden.id %}"
+                           class="btn btn-danger btn-sm">
+                            Rechazar
+                        </a>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="6" class="text-center text-muted">
+                        No existen órdenes pendientes.
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+
+    </div>
+</div>
+
+{% endblock %}

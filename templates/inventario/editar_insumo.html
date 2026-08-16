@@ -1,0 +1,90 @@
+{% extends 'base.html' %}
+
+{% block content %}
+
+<div class="card shadow-sm">
+    <div class="card-body">
+
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <div>
+                <h3>Editar Insumo</h3>
+                <p class="text-muted mb-0">
+                    Modificar información del insumo.
+                </p>
+            </div>
+
+            <a href="{% url 'inventario' %}" class="btn btn-secondary">
+                Volver
+            </a>
+        </div>
+
+        <hr>
+
+        <form method="POST">
+            {% csrf_token %}
+
+            <div class="row">
+
+                <div class="col-md-6 mb-3">
+                    <label class="form-label">Nombre del Insumo</label>
+                    {{ form.nombre_insumo }}
+                </div>
+                <div class="col-md-6 mb-3">
+                    <label class="form-label">
+                        Tipo de insumo
+                    </label>
+
+                    {{ form.tipo_insumo }}
+                    </div>
+
+                <div class="col-md-6 mb-3">
+                    <label class="form-label">Categoría</label>
+                    {{ form.categoria }}
+                </div>
+
+                <div class="col-md-6 mb-3">
+                    <label class="form-label">Stock</label>
+                    {{ form.stock }}
+                </div>
+
+                <div class="col-md-6 mb-3">
+                    <label class="form-label">Stock mínimo</label>
+                    {{ form.stock_minimo }}
+                </div>
+
+                <div class="col-md-6 mb-3">
+                    <label class="form-label">Unidad de medida</label>
+                    {{ form.unidad_medida }}
+                </div>
+
+                <div class="col-md-6 mb-3">
+                    <label class="form-label">Nivel de peligrosidad</label>
+                    {{ form.nivel_peligrosidad }}
+                </div>
+
+                <div class="col-12 mb-3">
+                    <label class="form-label">Descripción</label>
+                    {{ form.descripcion }}
+                </div>
+
+            </div>
+
+            <hr>
+
+            <button type="submit" class="btn btn-primary">
+                Guardar Cambios
+            </button>
+            <div class="col-12 mb-3">
+        <div class="form-check">
+            {{ form.estado }}
+            <label class="form-check-label">
+                Insumo activo
+            </label>
+        </div>
+    </div>
+        </form>
+
+    </div>
+</div>
+
+{% endblock %}

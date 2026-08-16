@@ -1,0 +1,169 @@
+{% extends 'base.html' %}
+
+{% block content %}
+
+<div class="card shadow-sm">
+    <div class="card-body">
+
+        <h3>Kardex de Inventario</h3>
+
+        <p class="text-muted">
+            Historial.
+        </p>
+
+        <div class="mb-3 text-end">
+
+            <a href="{% url 'kardex_pdf' %}" class="btn btn-danger">
+                Exportar PDF
+            </a>
+
+            <a href="{% url 'kardex_excel' %}" class="btn btn-success">
+                Exportar Excel
+            </a>
+
+        </div>
+
+        <hr>
+
+        <form method="GET" class="row mb-4">
+
+            <div class="col-md-5">
+                <input type="text"
+                       id="buscarKardex"
+                       name="buscar"
+                       class="form-control"
+                       placeholder="Buscar insumo, usuario u orden..."
+                       value="{{ buscar|default:'' }}">
+            </div>
+
+            <div class="col-md-3">
+                <input type="date"
+                       name="fecha_inicio"
+                       class="form-control"
+                       value="{{ fecha_inicio|default:'' }}">
+            </div>
+
+            <div class="col-md-3">
+                <input type="date"
+                       name="fecha_fin"
+                       class="form-control"
+                       value="{{ fecha_fin|default:'' }}">
+            </div>
+
+            <div class="col-md-1">
+                <button class="btn btn-primary w-100">
+                    Filtrar
+                </button>
+            </div>
+
+        </form>
+        <div class="table-responsive">
+        <table class="table table-hover" id="tablaKardex">
+
+            <thead>
+                <tr>
+                    <th>Fecha</th>
+                    <th>Usuario</th>
+                    <th>Insumo</th>
+                    <th>Tipo</th>
+                    <th>Cantidad</th>
+                    <th>Stock anterior</th>
+                    <th>Stock actual</th>
+                    <th>Observación</th>
+                </tr>
+            </thead>
+
+            <tbody>
+
+                {% for mov in movimientos %}
+
+                <tr>
+                    <td>{{ mov.fecha_movimiento|date:"d/m/Y H:i" }}</td>
+                    <td>{{ mov.usuario.username }}</td>
+                    <td>{{ mov.insumo.nombre_insumo }}</td>
+
+                    <td>
+                        {% if mov.tipo_movimiento == 'ENTRADA' %}
+                            <span class="badge bg-success">
+                                ENTRADA
+                            </span>
+                        {% else %}
+                            <span class="badge bg-danger">
+                                SALIDA
+                            </span>
+                        {% endif %}
+                    </td>
+
+                    <td>{{ mov.cantidad }}</td>
+                    <td>{{ mov.stock_anterior }}</td>
+                    <td>{{ mov.stock_actual }}</td>
+                    <td>{{ mov.observacion }}</td>
+                </tr>
+
+                {% empty %}
+
+                <tr>
+                    <td colspan="8" class="text-center text-muted">
+                        No existen movimientos registrados.
+                    </td>
+                </tr>
+
+                {% endfor %}
+
+            </tbody>
+
+        </table>
+
+        <p id="sinResultadosKardex"
+           class="text-center text-muted mt-3"
+           style="display: none;">
+            No se encontraron movimientos con esa búsqueda.
+        </p>
+
+        <div id="paginacionKardex">
+            {% include 'paginacion.html' %}
+        </div>
+        </div>
+    </div>
+</div>
+
+<script>
+const buscarKardex = document.getElementById('buscarKardex');
+const filasKardex = document.querySelectorAll('#tablaKardex tbody tr');
+const sinResultadosKardex = document.getElementById('sinResultadosKardex');
+const paginacionKardex = document.getElementById('paginacionKardex');
+
+buscarKardex.addEventListener('keyup', function () {
+
+    let filtro = this.value.toLowerCase().trim();
+    let encontrados = 0;
+
+    filasKardex.forEach(function (fila) {
+
+        let contenido = fila.textContent.toLowerCase();
+
+        if (contenido.includes(filtro)) {
+            fila.style.display = '';
+            encontrados++;
+        } else {
+            fila.style.display = 'none';
+        }
+
+    });
+
+    if (filtro.length > 0) {
+        paginacionKardex.style.display = 'none';
+    } else {
+        paginacionKardex.style.display = '';
+    }
+
+    if (encontrados === 0 && filtro.length > 0) {
+        sinResultadosKardex.style.display = 'block';
+    } else {
+        sinResultadosKardex.style.display = 'none';
+    }
+
+});
+</script>
+
+{% endblock %}

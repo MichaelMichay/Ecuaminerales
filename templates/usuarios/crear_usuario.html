@@ -1,0 +1,225 @@
+{% extends 'base.html' %}
+
+{% block content %}
+
+<div class="card shadow-sm">
+    <div class="card-body">
+
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <div>
+                <h3>Crear Usuario</h3>
+                <p class="text-muted mb-0">Registro de usuarios por rol.</p>
+            </div>
+
+            <a href="{% url 'usuarios' %}" class="btn btn-secondary">
+                Volver
+            </a>
+        </div>
+
+        <hr>
+
+        <form method="POST" novalidate>
+            {% csrf_token %}
+
+            <div class="row">
+
+                <div class="col-md-6 mb-3">
+                    <label class="form-label fw-bold">Usuario</label>
+                    {{ form.username }}
+
+                    {% if form.username.errors %}
+                        <div class="alert alert-danger py-2 mt-2 mb-0">
+                            <i class="bi bi-exclamation-triangle-fill"></i>
+                            {{ form.username.errors.0 }}
+                        </div>
+                    {% endif %}
+                </div>
+
+                <div class="col-md-6 mb-3">
+                    <label class="form-label fw-bold">Contraseña</label>
+
+                    <div class="input-group">
+                        {{ form.password }}
+
+                        <button class="btn btn-outline-secondary"
+                                type="button"
+                                onclick="mostrarPassword()">
+                            <i id="iconPassword" class="bi bi-eye-fill"></i>
+                        </button>
+                    </div>
+
+                    <div class="progress mt-2" style="height: 8px;">
+                        <div id="barraPassword" class="progress-bar" style="width: 0%;"></div>
+                    </div>
+
+                    <small id="textoPassword" class="text-muted">
+                        Ingrese una contraseña segura.
+                    </small>
+
+                    {% if form.password.errors %}
+                        <div class="alert alert-danger py-2 mt-2 mb-0">
+                            <i class="bi bi-lock-fill"></i>
+                            {{ form.password.errors.0 }}
+                        </div>
+                    {% endif %}
+                </div>
+
+                <div class="col-md-6 mb-3">
+                    <label class="form-label fw-bold">Nombres</label>
+                    {{ form.first_name }}
+
+                    {% if form.first_name.errors %}
+                        <div class="alert alert-danger py-2 mt-2 mb-0">
+                            <i class="bi bi-person-fill"></i>
+                            {{ form.first_name.errors.0 }}
+                        </div>
+                    {% endif %}
+                </div>
+
+                <div class="col-md-6 mb-3">
+                    <label class="form-label fw-bold">Apellidos</label>
+                    {{ form.last_name }}
+
+                    {% if form.last_name.errors %}
+                        <div class="alert alert-danger py-2 mt-2 mb-0">
+                            <i class="bi bi-person-fill"></i>
+                            {{ form.last_name.errors.0 }}
+                        </div>
+                    {% endif %}
+                </div>
+
+                <div class="col-md-6 mb-3">
+                    <label class="form-label fw-bold">Correo</label>
+                    {{ form.email }}
+
+                    {% if form.email.errors %}
+                        <div class="alert alert-danger py-2 mt-2 mb-0">
+                            <i class="bi bi-envelope-fill"></i>
+                            {{ form.email.errors.0 }}
+                        </div>
+                    {% endif %}
+                </div>
+
+                <div class="col-md-6 mb-3">
+                    <label class="form-label fw-bold">Cédula</label>
+                    {{ form.cedula }}
+
+                    <small class="text-muted">
+                        Ingrese una cédula ecuatoriana válida.
+                    </small>
+
+                    {% if form.cedula.errors %}
+                        <div class="alert alert-danger py-2 mt-2 mb-0">
+                            <i class="bi bi-person-vcard-fill"></i>
+                            {{ form.cedula.errors.0 }}
+                        </div>
+                    {% endif %}
+                </div>
+
+                <div class="col-md-6 mb-3">
+                    <label class="form-label fw-bold">Teléfono</label>
+                    {{ form.telefono }}
+
+                    <small class="text-muted">
+                        Ejemplo: 0987654321
+                    </small>
+
+                    {% if form.telefono.errors %}
+                        <div class="alert alert-danger py-2 mt-2 mb-0">
+                            <i class="bi bi-phone-fill"></i>
+                            {{ form.telefono.errors.0 }}
+                        </div>
+                    {% endif %}
+                </div>
+
+                <div class="col-md-6 mb-3">
+                    <label class="form-label fw-bold">Rol</label>
+                    {{ form.rol }}
+
+                    {% if form.rol.errors %}
+                        <div class="alert alert-danger py-2 mt-2 mb-0">
+                            <i class="bi bi-person-badge-fill"></i>
+                            {{ form.rol.errors.0 }}
+                        </div>
+                    {% endif %}
+                </div>
+
+                <div class="col-md-6 mb-3">
+                    <label class="form-label fw-bold d-block">Estado</label>
+
+                    <div class="form-check">
+                        {{ form.estado }}
+                        <label class="form-check-label ms-2">
+                            Activo
+                        </label>
+                    </div>
+                </div>
+
+            </div>
+
+            <hr>
+
+            <button type="submit" class="btn btn-primary">
+                Guardar Usuario
+            </button>
+
+        </form>
+
+    </div>
+</div>
+
+<script>
+function mostrarPassword() {
+    let password = document.getElementById('id_password');
+    let icon = document.getElementById('iconPassword');
+
+    if (password.type === 'password') {
+        password.type = 'text';
+        icon.classList.remove('bi-eye-fill');
+        icon.classList.add('bi-eye-slash-fill');
+    } else {
+        password.type = 'password';
+        icon.classList.remove('bi-eye-slash-fill');
+        icon.classList.add('bi-eye-fill');
+    }
+}
+
+const passwordInput = document.getElementById('id_password');
+const barra = document.getElementById('barraPassword');
+const texto = document.getElementById('textoPassword');
+
+passwordInput.addEventListener('input', function () {
+    const valor = passwordInput.value;
+    let fuerza = 0;
+
+    if (valor.length >= 8) fuerza++;
+    if (/[A-Z]/.test(valor)) fuerza++;
+    if (/[0-9]/.test(valor)) fuerza++;
+    if (/[^A-Za-z0-9]/.test(valor)) fuerza++;
+
+    barra.className = 'progress-bar';
+
+    if (valor.length === 0) {
+        barra.style.width = '0%';
+        texto.innerText = 'Ingrese una contraseña segura.';
+        texto.className = 'text-muted';
+    } else if (fuerza <= 1) {
+        barra.style.width = '33%';
+        barra.classList.add('bg-danger');
+        texto.innerText = 'Contraseña débil';
+        texto.className = 'text-danger';
+    } else if (fuerza <= 3) {
+        barra.style.width = '66%';
+        barra.classList.add('bg-warning');
+        texto.innerText = 'Contraseña media';
+        texto.className = 'text-warning';
+    } else {
+        barra.style.width = '100%';
+        barra.classList.add('bg-success');
+        texto.innerText = 'Contraseña fuerte';
+        texto.className = 'text-success';
+    }
+});
+</script>
+
+{% endblock %}

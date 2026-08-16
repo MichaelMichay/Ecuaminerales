@@ -1,0 +1,165 @@
+{% extends 'base.html' %}
+
+{% block content %}
+
+<div class="card shadow-sm">
+
+    <div class="card-body">
+
+        <div class="d-flex justify-content-between align-items-center mb-4">
+
+            <div>
+                <h3>Mi Perfil</h3>
+                <p class="text-muted mb-0">
+                    Consulta y actualización de datos personales permitidos.
+                </p>
+            </div>
+
+        </div>
+
+        <hr>
+
+        <div class="alert alert-info">
+            <i class="bi bi-info-circle-fill"></i>
+            Los datos de identidad no son editables por seguridad del sistema.
+        </div>
+
+        <form method="POST" novalidate>
+
+            {% csrf_token %}
+
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    <label class="form-label fw-bold">Usuario</label>
+
+                    <input type="text"
+                        name="username"
+                        id="id_username"
+                        class="form-control"
+                        value="{{ usuario.username }}">
+
+                    {% if form.username.errors %}
+                        <div class="alert alert-danger py-2 mt-2 mb-0">
+                            <i class="bi bi-person-fill"></i>
+                            {{ form.username.errors.0 }}
+                        </div>
+                    {% endif %}
+                </div>
+
+                <div class="col-md-6 mb-3">
+                    <label class="form-label fw-bold">Rol</label>
+                    <input type="text"
+                           class="form-control bg-light"
+                           value="{{ usuario.rol.nombre_rol }}"
+                           readonly>
+                </div>
+
+                <div class="col-md-6 mb-3">
+                    <label class="form-label fw-bold">Nombres</label>
+                    <input type="text"
+                           class="form-control bg-light"
+                           value="{{ usuario.first_name }}"
+                           readonly>
+                </div>
+
+                <div class="col-md-6 mb-3">
+                    <label class="form-label fw-bold">Apellidos</label>
+                    <input type="text"
+                           class="form-control bg-light"
+                           value="{{ usuario.last_name }}"
+                           readonly>
+                </div>
+
+                <div class="col-md-6 mb-3">
+                    <label class="form-label fw-bold">Cédula</label>
+                    <input type="text"
+                           class="form-control bg-light"
+                           value="{{ usuario.cedula }}"
+                           readonly>
+                </div>
+
+                <div class="col-md-6 mb-3">
+                    <label class="form-label fw-bold">Correo</label>
+                    {{ form.email }}
+
+                    {% if form.email.errors %}
+                        <div class="alert alert-danger py-2 mt-2 mb-0">
+                            <i class="bi bi-envelope-fill"></i>
+                            {{ form.email.errors.0 }}
+                        </div>
+                    {% endif %}
+                </div>
+
+                <div class="col-md-6 mb-3">
+                    <label class="form-label fw-bold">Teléfono</label>
+                    {{ form.telefono }}
+
+                    <small class="text-muted">
+                        Ejemplo: 0987654321
+                    </small>
+
+                    {% if form.telefono.errors %}
+                        <div class="alert alert-danger py-2 mt-2 mb-0">
+                            <i class="bi bi-phone-fill"></i>
+                            {{ form.telefono.errors.0 }}
+                        </div>
+                    {% endif %}
+                </div>
+
+                <div class="col-md-6 mb-3">
+                    <label class="form-label fw-bold">Nueva contraseña</label>
+
+                    <div class="input-group">
+                        {{ form.nueva_password }}
+
+                        <button class="btn btn-outline-secondary"
+                                type="button"
+                                onclick="mostrarPassword()">
+                            <i id="iconPassword" class="bi bi-eye-fill"></i>
+                        </button>
+                    </div>
+
+                    <small class="text-muted">
+                        Dejar vacío si no desea cambiarla.
+                    </small>
+
+                    {% if form.nueva_password.errors %}
+                        <div class="alert alert-danger py-2 mt-2 mb-0">
+                            <i class="bi bi-lock-fill"></i>
+                            {{ form.nueva_password.errors.0 }}
+                        </div>
+                    {% endif %}
+                </div>
+
+            </div>
+
+            <hr>
+
+            <button type="submit" class="btn btn-primary">
+                Guardar Cambios
+            </button>
+
+        </form>
+
+    </div>
+
+</div>
+
+<script>
+function mostrarPassword() {
+    let password = document.getElementById('id_nueva_password');
+    let icon = document.getElementById('iconPassword');
+
+    if (password.type === 'password') {
+        password.type = 'text';
+        icon.classList.remove('bi-eye-fill');
+        icon.classList.add('bi-eye-slash-fill');
+    } else {
+        password.type = 'password';
+        icon.classList.remove('bi-eye-slash-fill');
+        icon.classList.add('bi-eye-fill');
+    }
+}
+</script>
+
+{% endblock %}

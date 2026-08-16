@@ -1,0 +1,76 @@
+{% extends 'base.html' %}
+
+{% block content %}
+  <div class="card shadow-sm">
+    <div class="card-body">
+      <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+          <h3>Panel de Polvorín</h3>
+
+          <p class="text-muted mb-0">Control de entregas físicas de explosivos.</p>
+        </div>
+      </div>
+
+      <hr />
+
+      <div class="row mb-4">
+        <div class="col-md-6">
+          <div class="card border-0 shadow-sm">
+            <div class="card-body text-center">
+              <h5>Despachos pendientes</h5>
+
+              <h2 class="text-warning">{{ total_pendientes }}</h2>
+            </div>
+          </div>
+        </div>
+
+        <div class="col-md-6">
+          <div class="card border-0 shadow-sm">
+            <div class="card-body text-center">
+              <h5>Entregas realizadas</h5>
+
+              <h2 class="text-success">{{ total_entregas }}</h2>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <h4 class="mb-3">Despachos pendientes</h4>
+      <div class="table-responsive">
+        <table class="table table-hover">
+          <thead>
+            <tr>
+              <th>Orden</th>
+              <th>Nombre</th>
+              <th>Cantidad </th>
+              <th>Acciones</th>
+            </tr>
+          </thead>
+
+          <tbody>
+            {% for despacho in despachos_pendientes %}
+              <tr>
+                <td>{{ despacho.orden_tiro.codigo_orden }}</td>
+                <td>{{ despacho.orden_tiro.perforista.first_name }} {{ despacho.orden_tiro.perforista.last_name }}</td>
+                <td>{{ despacho.orden_tiro.cantidad_tiros }}  Unidades</td>
+
+
+                <td>
+                  <a href="{% url 'detalle_despacho_polvorin' despacho.id %}" class="btn btn-primary btn-sm">Ver</a>
+
+                  <a href="{% url 'registrar_entrega_polvorin' despacho.id %}" class="btn btn-success btn-sm">Entregar</a>
+
+                  <a href="{% url 'rechazar_entrega_polvorin' despacho.id %}" class="btn btn-danger btn-sm">Rechazar</a>
+                </td>
+              </tr>
+            {% empty %}
+              <tr>
+                <td colspan="5" class="text-center text-muted">No existen despachos pendientes.</td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+{% endblock %}

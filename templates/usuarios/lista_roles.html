@@ -1,0 +1,67 @@
+{% extends 'base.html' %}
+
+{% block content %}
+  <div class="card shadow-sm">
+    <div class="card-body">
+      <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+          <h3>Roles del Sistema</h3>
+          <p class="text-muted mb-0">Administrador, Bodeguero y Perforista.</p>
+        </div>
+
+        <a href="{% url 'crear_rol' %}" class="btn btn-primary">Nuevo Rol</a>
+      </div>
+
+      <hr />
+      <div class="table-responsive tabla-usuarios-responsive">
+        <table class="table table-hover">
+          <thead>
+            <tr>
+              <th>Nombre del rol</th>
+              <th>Acciones</th>
+            </tr>
+          </thead>
+
+          <tbody>
+            {% for rol in roles %}
+              <tr>
+                <td>{{ rol.nombre_rol }}</td>
+
+                <td>
+                  <a href="{% url 'editar_rol' rol.id %}" class="btn btn-sm btn-warning">Editar</a>
+
+                  <a href="{% url 'eliminar_rol' rol.id %}" class="btn btn-sm btn-danger" onclick="confirmarEliminacion(event, this.href)">Eliminar</a>
+                </td>
+              </tr>
+            {% empty %}
+              <tr>
+                <td colspan="2" class="text-center text-muted">No existen roles registrados.</td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      {% include 'paginacion.html' %}
+    </div>
+  </div>
+  <script>
+    function confirmarEliminacion(event, url) {
+      event.preventDefault()
+    
+      Swal.fire({
+        title: '¿Eliminar rol?',
+        text: 'Esta acción no se puede deshacer.',
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#d33',
+        cancelButtonColor: '#6c757d',
+        confirmButtonText: 'Sí, eliminar',
+        cancelButtonText: 'Cancelar'
+      }).then((result) => {
+        if (result.isConfirmed) {
+          window.location.href = url
+        }
+      })
+    }
+  </script>
+{% endblock %}

@@ -1,0 +1,83 @@
+{% extends 'base.html' %}
+
+{% block content %}
+
+<div class="card shadow-sm">
+
+    <div class="card-body">
+
+        <div class="d-flex justify-content-between align-items-center mb-4">
+
+            <div>
+                <h3>Órdenes de Tiro</h3>
+                <p class="text-muted mb-0">
+                    Historial de solicitudes realizadas por el perforista.
+                </p>
+            </div>
+
+            <a href="{% url 'crear_orden' %}" class="btn btn-primary">
+                Nueva Orden
+            </a>
+
+        </div>
+
+        <hr>
+        <div class="table-responsive">
+        <table class="table table-hover">
+
+            <thead>
+                <tr>
+                    <th>Código</th>
+                    <th>Fecha</th>
+                    <th>Lugar</th>
+                    <th>Tiros</th>
+                    <th>Mecha/Tiro</th>
+                    <th>Estado</th>
+                </tr>
+            </thead>
+
+            <tbody>
+
+                {% for orden in ordenes %}
+
+                <tr>
+                    <td>{{ orden.codigo_orden }}</td>
+                    <td>{{ orden.fecha_orden|date:"d/m/Y H:i" }}</td>
+                    <td>{{ orden.lugar.nombre }}</td>
+                    <td>{{ orden.cantidad_tiros }}</td>
+                    <td>{{ orden.metros_mecha }} m</td>
+
+                    <td>
+                        {% if orden.estado == 'PENDIENTE' %}
+                            <span class="badge bg-warning text-dark">PENDIENTE</span>
+                        {% elif orden.estado == 'DESPACHADA' %}
+                            <span class="badge bg-success">DESPACHADA</span>
+                        {% elif orden.estado == 'RECHAZADA' %}
+                            <span class="badge bg-danger">RECHAZADA</span>
+                        {% else %}
+                            <span class="badge bg-secondary">{{ orden.estado }}</span>
+                        {% endif %}
+                    </td>
+                </tr>
+
+                {% empty %}
+
+                <tr>
+                    <td colspan="6" class="text-center text-muted">
+                        No existen órdenes registradas.
+                    </td>
+                </tr>
+
+                {% endfor %}
+
+            </tbody>
+
+        </table>
+
+        {% include 'paginacion.html' %}
+        </div>
+    </div>
+
+</div>
+
+{% endblock %}

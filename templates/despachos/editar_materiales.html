@@ -1,0 +1,138 @@
+{% extends 'base.html' %}
+
+{% block content %}
+
+<div class="card shadow">
+    <div class="card-header bg-primary text-white">
+        <h4 class="mb-0">Editar Materiales - {{ orden.codigo_orden }}</h4>
+    </div>
+
+    <div class="table-responsive p-3">
+        <form method="POST">
+            {% csrf_token %}
+
+            {# Datos de stock por insumo, inyectados para JS #}
+            <script id="insumos-data" type="application/json">
+                {
+                    {% for insumo in insumos %}
+                    "{{ insumo.id }}": {
+                        "stock": {{ insumo.stock }},
+                        "nombre": "{{ insumo.nombre_insumo }}"
+                    }{% if not forloop.last %},{% endif %}
+                    {% endfor %}
+                }
+            </script>
+
+            <table class="table table-bordered table-hover">
+                <thead>
+                    <tr>
+                        <th>Categoría</th>
+                        <th>Insumo</th>
+                        <th>Cantidad</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for material in materiales %}
+                    <tr>
+                        <td>{{ material.insumo.tipo_insumo }}</td>
+
+                        <td>
+                            <select
+                                name="insumo_{{ material.id }}"
+                                class="form-select"
+                                onchange="actualizarMaterial({{ material.id }}, this.value)">
+
+                                {% for insumo in insumos %}
+                                    {% if insumo.tipo_insumo == material.insumo.tipo_insumo %}
+                                        <option
+                                            value="{{ insumo.id }}"
+                                            data-stock="{{ insumo.stock }}"
+                                            data-cantidad="{{ material.cantidad }}"
+                                            {% if insumo.id == material.insumo.id %}selected{% endif %}>
+                                            {{ insumo.nombre_insumo }}
+                                        </option>
+                                    {% endif %}
+                                {% endfor %}
+                            </select>
+                        </td>
+
+                        <td>
+                            <div class="mb-2">
+                                <span class="badge bg-success" id="badge-stock-{{ material.id }}">
+                                    Stock: {{ material.insumo.stock }}
+                                </span>
+                                <span class="badge bg-primary" id="badge-calc-{{ material.id }}">
+                                    Calculado: {{ material.cantidad }}
+                                </span>
+                            </div>
+
+                            <input
+                                type="number"
+                                step="0.01"
+                                min="0"
+                                name="material_{{ material.id }}"
+                                id="input-qty-{{ material.id }}"
+                                value="{{ material.cantidad }}"
+                                class="form-control"
+                                oninput="validarCantidad({{ material.id }}, this.value)">
+
+                            <small class="text-muted" id="hint-{{ material.id }}">
+                                Puede modificar la cantidad antes de aprobar la orden.
+                            </small>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+
+            <div class="mt-3">
+                <button type="submit" class="btn btn-success">Guardar Cambios</button>
+                <a href="{% url 'panel_bodeguero' %}" class="btn btn-secondary">Cancelar</a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+    const insumosData = JSON.parse(document.getElementById('insumos-data').textContent);
+
+    function actualizarMaterial(materialId, insumoId) {
+        const datos = insumosData[insumoId];
+        if (!datos) return;
+
+        // Actualizar badge de stock
+        const badgeStock = document.getElementById(`badge-stock-${materialId}`);
+        badgeStock.textContent = `Stock: ${datos.stock}`;
+        badgeStock.classList.remove('bg-danger');
+        badgeStock.classList.add('bg-success');
+
+        // Actualizar badge calculado con el stock del nuevo insumo
+        const badgeCalc = document.getElementById(`badge-calc-${materialId}`);
+        badgeCalc.textContent = `Calculado: ${datos.stock}`;
+
+        // Actualizar el input de cantidad
+        const inputQty = document.getElementById(`input-qty-${materialId}`);
+        inputQty.value = datos.stock;
+
+        validarCantidad(materialId, inputQty.value);
+    }
+
+    function validarCantidad(materialId, valor) {
+        const select = document.querySelector(`select[name="insumo_${materialId}"]`);
+        const insumoId = select.value;
+        const datos = insumosData[insumoId];
+        const hint = document.getElementById(`hint-${materialId}`);
+        const badgeStock = document.getElementById(`badge-stock-${materialId}`);
+        const qty = parseFloat(valor);
+
+        if (!isNaN(qty) && datos && qty > datos.stock) {
+            hint.innerHTML = `<span class="text-danger">⚠️ La cantidad supera el stock disponible (${datos.stock}).</span>`;
+            badgeStock.classList.replace('bg-success', 'bg-danger');
+        } else {
+            hint.textContent = 'Puede modificar la cantidad antes de aprobar la orden.';
+            badgeStock.classList.replace('bg-danger', 'bg-success');
+        }
+    }
+</script>
+
+{% endblock %}

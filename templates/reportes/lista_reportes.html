@@ -1,0 +1,139 @@
+{% extends 'base.html' %}
+
+{% block content %}
+  <div class="card shadow-sm">
+    <div class="card-body">
+      <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+          <h3>Auditoría del Sistema</h3>
+
+          <p class="text-muted mb-0">Acciones realizadas por los usuarios.</p>
+        </div>
+        <div class="d-flex gap-2" s>
+          <a href="{% url 'reporte_auditoria_pdf' %}?buscar={{ buscar|default:'' }}&fecha_inicio={{ fecha_inicio|default:'' }}&fecha_fin={{ fecha_fin|default:'' }}" class="btn btn-danger">Exportar PDF</a>
+        </div>
+      </div>
+
+      <hr />
+
+      <form method="GET" class="row mb-4">
+        <div class="col-md-5">
+          <input type="text" id="buscarAuditoria" name="buscar" class="form-control" placeholder="Buscar usuario, acción, orden o insumo..." value="{{ buscar|default:'' }}" />
+        </div>
+
+        <div class="col-md-3">
+          <input type="date" name="fecha_inicio" class="form-control" value="{{ fecha_inicio|default:'' }}" />
+        </div>
+
+        <div class="col-md-3">
+          <input type="date" name="fecha_fin" class="form-control" value="{{ fecha_fin|default:'' }}" />
+        </div>
+
+        <div class="col-md-1">
+          <button type="submit" class="btn btn-primary w-100">Filtrar</button>
+        </div>
+      </form>
+      <div class="table-responsive">
+        <table class="table table-hover" id="tablaAuditoria">
+          <thead>
+            <tr>
+              <th>Fecha</th>
+              <th>Usuario</th>
+              <th>Acción</th>
+              <th>Descripción</th>
+            </tr>
+          </thead>
+
+          <tbody>
+            {% for auditoria in auditorias %}
+              <tr>
+                <td>{{ auditoria.fecha|date:'d/m/Y H:i' }}</td>
+
+                <td>
+                  <strong>{{ auditoria.usuario.username }}</strong>
+
+                  {% if auditoria.usuario.rol %}
+                    <span class="text-muted">({{ auditoria.usuario.rol.nombre_rol }})</span>
+                  {% else %}
+                    <span class="text-muted">(Sin rol)</span>
+                  {% endif %}
+                </td>
+
+                <td>
+                  {% if 'SOLICITUD' in auditoria.accion %}
+                    <span class="badge bg-info text-dark">{{ auditoria.accion }}</span>
+                  {% elif 'CREACIÓN' in auditoria.accion %}
+                    <span class="badge bg-primary">{{ auditoria.accion }}</span>
+                  {% elif 'EDICIÓN' in auditoria.accion %}
+                    <span class="badge bg-warning text-dark">{{ auditoria.accion }}</span>
+                  {% elif 'ELIMINACIÓN' in auditoria.accion %}
+                    <span class="badge bg-danger">{{ auditoria.accion }}</span>
+                  {% elif 'APROBACIÓN' in auditoria.accion %}
+                    <span class="badge bg-success">{{ auditoria.accion }}</span>
+                  {% elif 'RECHAZO' in auditoria.accion %}
+                    <span class="badge bg-danger">{{ auditoria.accion }}</span>
+                  {% elif 'ENTREGA' in auditoria.accion %}
+                    <span class="badge bg-secondary">{{ auditoria.accion }}</span>
+                  {% else %}
+                    <span class="badge bg-dark">{{ auditoria.accion }}</span>
+                  {% endif %}
+                </td>
+
+                <td>{{ auditoria.descripcion }}</td>
+              </tr>
+            {% empty %}
+              <tr>
+                <td colspan="4" class="text-center text-muted">No existen registros de auditoría.</td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      
+      <p id="sinResultadosAuditoria" class="text-center text-muted mt-3" style="display: none;">No se encontraron registros de auditoría.</p>
+
+      <div id="paginacionAuditoria">
+        {% include 'paginacion.html' %}
+      </div>
+    </div>
+       <a href="{% url 'reporte_auditoria_pdf' %}?buscar={{ buscar|default:'' }}&fecha_inicio={{ fecha_inicio|default:'' }}&fecha_fin={{ fecha_fin|default:'' }}"
+               class="btn btn-danger">
+                Exportar PDF
+            </a>
+    </div>
+  </div>
+
+  <script>
+    const buscarAuditoria = document.getElementById('buscarAuditoria')
+    const filasAuditoria = document.querySelectorAll('#tablaAuditoria tbody tr')
+    const sinResultadosAuditoria = document.getElementById('sinResultadosAuditoria')
+    const paginacionAuditoria = document.getElementById('paginacionAuditoria')
+    
+    buscarAuditoria.addEventListener('keyup', function () {
+      let filtro = this.value.toLowerCase().trim()
+      let encontrados = 0
+    
+      filasAuditoria.forEach(function (fila) {
+        let contenido = fila.textContent.toLowerCase()
+    
+        if (contenido.includes(filtro)) {
+          fila.style.display = ''
+          encontrados++
+        } else {
+          fila.style.display = 'none'
+        }
+      })
+    
+      if (filtro.length > 0) {
+        paginacionAuditoria.style.display = 'none'
+      } else {
+        paginacionAuditoria.style.display = ''
+      }
+    
+      if (encontrados === 0 && filtro.length > 0) {
+        sinResultadosAuditoria.style.display = 'block'
+      } else {
+        sinResultadosAuditoria.style.display = 'none'
+      }
+    })
+  </script>
+{% endblock %}

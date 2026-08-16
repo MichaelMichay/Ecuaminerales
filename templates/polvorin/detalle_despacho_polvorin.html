@@ -1,0 +1,56 @@
+{% extends 'base.html' %}
+
+{% block content %}
+  <div class="card shadow-sm">
+    <div class="card-body">
+      <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+          <h3>Detalle</h3>
+          <p class="text-muted mb-0">Verificación de materiales antes de entregar.</p>
+        </div>
+
+        <a href="{% url 'panel_polvorin' %}" class="btn btn-secondary">Volver</a>
+      </div>
+
+      <hr />
+
+      <p>
+        <strong>Orden:</strong> {{ despacho.orden_tiro.codigo_orden }}
+      </p>
+      <p>
+        <strong>Nombre:</strong> {{ despacho.orden_tiro.perforista.first_name }} {{ despacho.orden_tiro.perforista.last_name }}
+      </p>
+      <p>
+        <strong>Fecha despacho:</strong> {{ despacho.fecha_despacho|date:'d/m/Y H:i' }}
+      </p>
+
+      <h5 class="mt-4">Materiales autorizados</h5>
+      <div class="table-responsive">
+        <table class="table table-hover">
+          <thead>
+            <tr>
+              <th>Insumo</th>
+              <th>Cantidad</th>
+              <th>Unidad</th>
+            </tr>
+          </thead>
+
+          <tbody>
+            {% for detalle in detalles %}
+              <tr>
+                <td>{{ detalle.insumo.nombre_insumo }}</td>
+                <td>{{ detalle.cantidad }}</td>
+                <td>{{ detalle.insumo.unidad_medida }}</td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      <div class="d-flex gap-2">
+        <a href="{% url 'registrar_entrega_polvorin' despacho.id %}" class="btn btn-success">Confirmar entrega</a>
+
+        <a href="{% url 'rechazar_entrega_polvorin' despacho.id %}" class="btn btn-danger">Rechazar entrega</a>
+      </div>
+    </div>
+  </div>
+{% endblock %}

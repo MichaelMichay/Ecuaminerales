@@ -1,0 +1,79 @@
+{% extends 'base.html' %}
+
+{% block content %}
+
+<div class="card shadow-sm">
+
+    <div class="card-body">
+
+        <div class="d-flex justify-content-between align-items-center mb-4">
+
+            <div>
+                <h3>Nueva Orden</h3>
+                <p class="text-muted mb-0">
+                    Solicitud digital.
+                </p>
+            </div>
+
+            <a href="{% url 'panel_perforista' %}" class="btn btn-secondary">
+                Volver
+            </a>
+
+        </div>
+
+        <hr>
+
+        <form method="POST">
+
+            {% csrf_token %}
+
+            <h5>Información de la solicitud</h5>
+
+            <div class="row mt-3">
+
+                <div class="col-md-6 mb-3">
+                    <label class="form-label">
+                        Cantidad de tiros
+                    </label>
+                    {{ form_orden.cantidad_tiros }}
+                </div>
+
+                <div class="col-md-6 mb-3">
+                    <label class="form-label">
+                        Metros de mecha por tiro
+                    </label>
+                    {{ form_orden.metros_mecha }}
+
+                    <small class="text-muted">
+                        Ejemplo: 1.8 metros por cada tiro.
+                    </small>
+                </div>
+
+                <div class="col-md-6 mb-3">
+                    <label class="form-label">
+                        Lugar de consumo
+                    </label>
+                    {{ form_orden.lugar }}
+                </div>
+
+                <div class="col-12 mb-3">
+                    <label class="form-label">
+                        Observación
+                    </label>
+                    {{ form_orden.observacion }}
+                </div>
+
+            </div>
+
+
+            <button type="submit" class="btn btn-primary">
+                Enviar Solicitud
+            </button>
+
+        </form>
+
+    </div>
+
+</div>
+
+{% endblock %}

@@ -1,0 +1,91 @@
+{% extends 'base.html' %}
+
+{% block content %}
+
+<div class="card shadow-sm">
+    <div class="card-body">
+
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <div>
+                <h3>Detalle</h3>
+                <p class="text-muted mb-0">
+                    Entrega física.
+                </p>
+            </div>
+
+            <a href="{% url 'panel_polvorin' %}" class="btn btn-secondary">
+                Volver
+            </a>
+        </div>
+
+        <hr>
+
+        <div class="row mb-4">
+            <div class="col-md-4">
+                <strong>Orden:</strong>
+                <p>{{ entrega.despacho.orden_tiro.codigo_orden }}</p>
+            </div>
+
+            <div class="col-md-4">
+                <strong>Nombre:</strong>
+                <p>{{ entrega.despacho.orden_tiro.perforista.first_name }} {{ entrega.despacho.orden_tiro.perforista.last_name }}</p>
+            </div>
+
+            <div class="col-md-4">
+                <strong>Fecha:</strong>
+                <p>{{ entrega.fecha_entrega|date:"d/m/Y H:i" }}</p>
+            </div>
+
+            <div class="col-md-4">
+                <strong>Estado:</strong>
+                <p>
+                    <span class="badge bg-success">
+                        {{ entrega.estado }}
+                    </span>
+                </p>
+            </div>
+
+        </div>
+        <div class="text-end mb-3">
+            <a href="{% url 'comprobante_entrega_pdf' entrega.id %}"
+            class="btn btn-danger">
+                <i class="bi bi-file-earmark-pdf-fill"></i>
+                Exportar PDF
+            </a>
+        </div>
+       
+
+</div>
+
+        <h5>Materiales entregados</h5>
+        <div class="table-responsive">
+        <table class="table table-hover mt-3">
+            <thead>
+                <tr>
+                    <th>Insumo</th>
+                    <th>Cantidad</th>
+                    <th>Unidad</th>
+                </tr>
+            </thead>
+
+            <tbody>
+                {% for detalle in detalles %}
+                <tr>
+                    <td>{{ detalle.insumo.nombre_insumo }}</td>
+                    <td>{{ detalle.cantidad }}</td>
+                    <td>{{ detalle.insumo.unidad_medida }}</td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="4" class="text-center text-muted">
+                        No existen materiales registrados.
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        </div>
+    </div>
+</div>
+
+{% endblock %}

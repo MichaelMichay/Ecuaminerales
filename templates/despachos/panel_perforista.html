@@ -1,0 +1,119 @@
+{% extends 'base.html' %}
+
+{% block content %}
+
+<div class="card shadow-sm">
+
+    <div class="card-body">
+
+        <div class="d-flex justify-content-between align-items-center mb-4">
+
+            <div>
+                <h3>Perforista</h3>
+                <p class="text-muted mb-0">
+                    Solicitudes.
+                </p>
+            </div>
+
+            <a href="{% url 'crear_orden' %}" class="btn btn-primary">
+                Nueva Orden
+            </a>
+
+        </div>
+
+        <hr>
+
+        <div class="row mb-4">
+
+            <div class="col-md-3 mb-3">
+                <div class="card border-0 shadow-sm text-center p-3">
+                    <h6>Total órdenes</h6>
+                    <h2 class="text-primary">{{ total_ordenes }}</h2>
+                </div>
+            </div>
+
+            <div class="col-md-3 mb-3">
+                <div class="card border-0 shadow-sm text-center p-3">
+                    <h6>Pendientes</h6>
+                    <h2 class="text-warning">{{ pendientes }}</h2>
+                </div>
+            </div>
+
+            <div class="col-md-3 mb-3">
+                <div class="card border-0 shadow-sm text-center p-3">
+                    <h6>Despachadas</h6>
+                    <h2 class="text-success">{{ despachadas }}</h2>
+                </div>
+            </div>
+
+            <div class="col-md-3 mb-3">
+                <div class="card border-0 shadow-sm text-center p-3">
+                    <h6>Rechazadas</h6>
+                    <h2 class="text-danger">{{ rechazadas }}</h2>
+                </div>
+            </div>
+
+        </div>
+
+        <h4>Últimas órdenes</h4>
+       <div class="table-responsive">
+        <table class="table table-hover mt-3">
+
+            <thead>
+                <tr>
+                    <th>Código</th>
+                    <th>Fecha</th>
+                    <th>Lugar</th>
+                    <th>Tiros</th>
+                    <th>Estado</th>
+                </tr>
+            </thead>
+
+            <tbody>
+
+                {% for orden in ultimas_ordenes %}
+
+                <tr>
+                    <td>{{ orden.codigo_orden }}</td>
+                    <td>{{ orden.fecha_orden|date:"d/m/Y H:i" }}</td>
+                    <td>{{ orden.lugar.nombre }}</td>
+                    <td>{{ orden.cantidad_tiros }}</td>
+
+                    <td>
+                        {% if orden.estado == 'PENDIENTE' %}
+                            <span class="badge bg-warning text-dark">PENDIENTE</span>
+                        {% elif orden.estado == 'DESPACHADA' %}
+                            <span class="badge bg-success">DESPACHADA</span>
+                        {% elif orden.estado == 'RECHAZADA' %}
+                            <span class="badge bg-danger">RECHAZADA</span>
+                        {% else %}
+                            <span class="badge bg-secondary">{{ orden.estado }}</span>
+                        {% endif %}
+                    </td>
+                </tr>
+
+                {% empty %}
+
+                <tr>
+                    <td colspan="5" class="text-center text-muted">
+                        No existen órdenes registradas.
+                    </td>
+                </tr>
+
+                {% endfor %}
+
+            </tbody>
+
+        </table>
+
+        <div class="text-end mt-3">
+            <a href="{% url 'mis_ordenes_perforista' %}" class="btn btn-outline-primary">
+                Ver todas mis órdenes
+            </a>
+        </div>
+       </div>
+    </div>
+
+</div>
+
+{% endblock %}

@@ -1,0 +1,157 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="card shadow-sm">
+    <div class="card-body">
+
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <div>
+                <h3>Panel del Bodeguero</h3>
+                <p class="text-muted mb-0">
+                    Revisión automática de materiales para despacho.
+                </p>
+            </div>
+        </div>
+
+        <hr>
+
+        <div class="table-responsive">
+            <table class="table table-hover align-middle">
+
+                <thead class="table-light">
+                    <tr>
+                        <th>Código</th>
+                        <th>Perforista</th>
+                        <th>Lugar</th>
+                        <th>Materiales calculados</th>
+                        <th>Estado</th>
+                        <th>Acciones</th>
+                    </tr>
+                </thead>
+
+                <tbody>
+
+                    {% for item in ordenes_materiales %}
+
+                    <tr>
+
+                        <!-- Código -->
+                        <td>
+                            <strong>
+                                {{ item.orden.codigo_orden }}
+                            </strong>
+                        </td>
+
+                        <!-- Perforista -->
+                        <td>
+                            {{ item.orden.perforista.first_name }}
+                            {{ item.orden.perforista.last_name }}
+                        </td>
+
+                        <!-- Lugar -->
+                        <td>
+                            {{ item.orden.lugar.nombre }}
+                        </td>
+
+                        <!-- Materiales -->
+                        <td>
+                            <ul class="mb-0 ps-3">
+
+                                {% for material in item.materiales %}
+
+                                <li>
+
+                                    {% if material.insumo.stock < material.cantidad %}
+
+                                        <strong class="text-danger">
+                                            {{ material.insumo.nombre_insumo }}
+                                        </strong>
+
+                                        <span class="text-danger">
+                                            : {{ material.cantidad }}
+                                        </span>
+
+                                        <small class="text-danger">
+                                            (Stock insuficiente)
+                                        </small>
+
+                                    {% else %}
+
+                                        <strong>
+                                            {{ material.insumo.nombre_insumo }}
+                                        </strong>
+
+                                        : {{ material.cantidad }}
+
+                                    {% endif %}
+
+                                </li>
+
+                                {% endfor %}
+
+                            </ul>
+                        </td>
+
+                        <!-- Estado -->
+                        <td>
+                            {% if item.orden.estado == "PENDIENTE" %}
+                                <span class="badge bg-warning text-dark">
+                                    {{ item.orden.estado }}
+                                </span>
+                            {% elif item.orden.estado == "APROBADA" %}
+                                <span class="badge bg-success">
+                                    {{ item.orden.estado }}
+                                </span>
+                            {% elif item.orden.estado == "RECHAZADA" %}
+                                <span class="badge bg-danger">
+                                    {{ item.orden.estado }}
+                                </span>
+                            {% else %}
+                                <span class="badge bg-secondary">
+                                    {{ item.orden.estado }}
+                                </span>
+                            {% endif %}
+                        </td>
+
+                        <!-- Acciones -->
+                        <td>
+                            <div class="d-flex flex-wrap gap-1">
+
+                                <a href="{% url 'aprobar_orden_bodeguero' item.orden.id %}"
+                                   class="btn btn-success btn-sm">
+                                    Aprobar
+                                </a>
+
+                                <a href="{% url 'rechazar_orden_bodeguero' item.orden.id %}"
+                                   class="btn btn-danger btn-sm">
+                                    Rechazar
+                                </a>
+
+                                <a href="{% url 'editar_materiales' item.orden.id %}"
+                                   class="btn btn-warning btn-sm">
+                                    Editar Materiales
+                                </a>
+
+                            </div>
+                        </td>
+
+                    </tr>
+
+                    {% empty %}
+
+                    <tr>
+                        <td colspan="6" class="text-center text-muted py-4">
+                            No existen órdenes pendientes.
+                        </td>
+                    </tr>
+
+                    {% endfor %}
+
+                </tbody>
+
+            </table>
+        </div>
+
+    </div>
+</div>
+{% endblock %}
