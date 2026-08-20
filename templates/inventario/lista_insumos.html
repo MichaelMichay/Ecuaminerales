@@ -55,6 +55,7 @@
                                 <th>Nombre</th>
                                 <th>Stock</th>
                                 <th>Unidad</th>
+                                <th>Número de Lote</th>
                                 <th>Estado</th>
                                 <th>Acciones</th>
                             </tr>
@@ -83,6 +84,8 @@
 
 
                                 <td>{{ insumo.unidad_medida }}</td>
+
+                                <td>{{ insumo.numero_lote }}</td>
 
                                 <td>
                                     {% if insumo.stock <= insumo.stock_minimo %}

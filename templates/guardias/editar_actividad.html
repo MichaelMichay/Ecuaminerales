@@ -1,0 +1,208 @@
+{% extends 'base.html' %}
+
+{% block content %}
+
+<style>
+    .form-card {
+        max-width: 750px;
+        margin: 0 auto;
+        background: white;
+        border-radius: 18px;
+        padding: 30px;
+        box-shadow: 0 6px 20px rgba(0,0,0,0.07);
+    }
+
+    .form-title {
+        color: #243b6b;
+        font-weight: 700;
+    }
+
+    .campo-formulario {
+        margin-bottom: 20px;
+    }
+
+    .campo-formulario label {
+        font-weight: 600;
+        margin-bottom: 7px;
+        color: #374151;
+    }
+
+    .ayuda {
+        font-size: 13px;
+        color: #6b7280;
+        margin-top: 5px;
+    }
+
+    .acciones-formulario {
+        display: flex;
+        justify-content: space-between;
+        gap: 10px;
+        margin-top: 25px;
+    }
+
+    @media (max-width: 576px) {
+
+        .form-card {
+            padding: 20px 15px;
+            border-radius: 14px;
+        }
+
+        .acciones-formulario {
+            flex-direction: column;
+        }
+
+        .acciones-formulario .btn {
+            width: 100%;
+        }
+    }
+</style>
+
+
+<div class="form-card">
+
+    <div class="mb-4">
+
+        <h3 class="form-title">
+
+            <i class="bi bi-pencil-square me-2"></i>
+
+            Editar actividad
+
+        </h3>
+
+        <p class="text-muted mb-0">
+
+            Modifique la información y tarifa de la actividad.
+
+        </p>
+
+    </div>
+
+
+    <form method="POST">
+
+        {% csrf_token %}
+
+
+        {% if form.non_field_errors %}
+
+            <div class="alert alert-danger">
+                {{ form.non_field_errors }}
+            </div>
+
+        {% endif %}
+
+
+        <div class="campo-formulario">
+
+            <label>
+                Nombre de la actividad
+            </label>
+
+            {{ form.nombre }}
+
+            {% if form.nombre.errors %}
+                <div class="text-danger small">
+                    {{ form.nombre.errors }}
+                </div>
+            {% endif %}
+
+        </div>
+
+
+        <div class="campo-formulario">
+
+            <label>
+                Descripción
+            </label>
+
+            {{ form.descripcion }}
+
+            {% if form.descripcion.errors %}
+                <div class="text-danger small">
+                    {{ form.descripcion.errors }}
+                </div>
+            {% endif %}
+
+        </div>
+
+
+        <div class="campo-formulario">
+
+            <label>
+                Unidad
+            </label>
+
+            {{ form.unidad }}
+
+            {% if form.unidad.errors %}
+                <div class="text-danger small">
+                    {{ form.unidad.errors }}
+                </div>
+            {% endif %}
+
+        </div>
+
+
+        <div class="campo-formulario">
+
+            <label>
+                Valor
+            </label>
+
+            {{ form.valor }}
+
+            <div class="ayuda">
+
+                Cambiar este valor no modifica los valores
+                históricos de actividades ya registradas.
+
+            </div>
+
+            {% if form.valor.errors %}
+                <div class="text-danger small">
+                    {{ form.valor.errors }}
+                </div>
+            {% endif %}
+
+        </div>
+
+
+        <div class="form-check mb-3">
+
+            {{ form.activo }}
+
+            <label class="form-check-label">
+
+                Actividad activa
+
+            </label>
+
+        </div>
+
+
+        <div class="acciones-formulario">
+
+            <a href="{% url 'guardias_actividades' %}"
+               class="btn btn-secondary">
+
+                <i class="bi bi-arrow-left me-1"></i>
+                Cancelar
+
+            </a>
+
+            <button type="submit"
+                    class="btn btn-primary">
+
+                <i class="bi bi-save me-1"></i>
+                Guardar cambios
+
+            </button>
+
+        </div>
+
+    </form>
+
+</div>
+
+{% endblock %}

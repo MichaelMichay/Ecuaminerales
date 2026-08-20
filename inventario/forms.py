@@ -17,6 +17,7 @@ class InsumoForm(forms.ModelForm):
             'unidad_medida',
             'nivel_peligrosidad',
             'categoria',
+            'numero_lote',
             'estado'
         ]
 

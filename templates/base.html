@@ -99,7 +99,34 @@
                 Polvorín
               </a>
             </div>
+<!-- =====================================================
+     GESTIÓN DE GUARDIAS
+===================================================== -->
 
+<a data-bs-toggle="collapse"
+   href="#menuGuardias"
+   role="button"
+   aria-expanded="false"
+   aria-controls="menuGuardias">
+
+  <i class="bi bi-cash-coin me-2"></i>
+  GUARDIAS ▾
+
+</a>
+
+<div class="collapse submenu" id="menuGuardias">
+
+  <a href="{% url 'guardias_actividades' %}">
+    <i class="bi bi-currency-dollar me-2"></i>
+    Actividades y Tarifas
+  </a>
+
+  <a href="{% url 'guardias_registros' %}">
+    <i class="bi bi-clipboard-check me-2"></i>
+    Registro de Actividades
+  </a>
+
+</div>
             <a data-bs-toggle="collapse" href="#menuControl" role="button">
               <i class="bi bi-bar-chart-fill me-2"></i>
               CONTROL ▾
@@ -124,50 +151,50 @@
           {% if request.user.rol.nombre_rol == 'Bodeguero' %}
             <a href="{% url 'panel_bodeguero' %}">
               <i class="bi bi-clipboard-check-fill me-2"></i>
-              Panel Bodeguero
+              PANEL BODEGUERO
             </a>
 
             <a href="{% url 'inventario' %}">
               <i class="bi bi-box-seam-fill me-2"></i>
-              Inventario
+              INVENTARIO
             </a>
 
             <a href="{% url 'ordenes_bodeguero' %}">
               <i class="bi bi-file-earmark-text-fill me-2"></i>
-              Órdenes Pendientes
+              ÓRDENES PENDIENTES
             </a>
 
             <a href="{% url 'historial_bodeguero' %}">
               <i class="bi bi-clock-history me-2"></i>
-              Historial Despachos
+              HISTORIAL DESPACHOS
             </a>
           {% endif %}
           {% if request.user.rol.nombre_rol == 'Perforista' %}
             <a href="{% url 'panel_perforista' %}">
               <i class="bi bi-speedometer2 me-2"></i>
-              Panel Perforista
+              PANEL PERFORISTA
             </a>
 
             <a href="{% url 'crear_orden' %}">
               <i class="bi bi-plus-circle-fill me-2"></i>
-              Nueva Orden
+              NUEVA ORDEN
             </a>
 
             <a href="{% url 'mis_ordenes_perforista' %}">
               <i class="bi bi-list-check me-2"></i>
-              Mis Órdenes
+              MIS ÓRDENES
             </a>
           {% endif %}
 
           {% if request.user.rol.nombre_rol == 'Polvorinero' %}
             <a href="{% url 'panel_polvorin' %}">
               <i class="bi bi-shield-lock-fill me-2"></i>
-              Panel Polvorín
+              PANEL POLVORÍN
             </a>
 
             <a href="{% url 'historial_polvorin' %}">
               <i class="bi bi-clock-history me-2"></i>
-              Historial Entregas
+              HISTORIAL ENTREGAS
             </a>
           {% endif %}
 
@@ -175,6 +202,10 @@
             <i class="bi bi-person-circle me-2"></i>
             MI PERFIL
           </a>
+          <a href="{% url 'mis_ingresos' %}">
+    <i class="bi bi-cash-stack me-2"></i>
+    MIS INGRESOS
+</a>
           <!-- CERRAR SESIÓN -->
           <div class="logout-btn">
             <a href="{% url 'logout' %}">

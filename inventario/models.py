@@ -34,6 +34,7 @@ class Insumo(models.Model):
     unidad_medida = models.CharField(max_length=50)
     nivel_peligrosidad = models.CharField(max_length=100)
     categoria = models.ForeignKey(CategoriaInsumo, on_delete=models.CASCADE)
+    numero_lote = models.CharField(max_length=20, blank=True, null=True)
     fecha_registro = models.DateTimeField(auto_now_add=True)
     estado = models.BooleanField(default=True)
 

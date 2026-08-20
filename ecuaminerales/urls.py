@@ -25,4 +25,5 @@ urlpatterns = [
     path('polvorin/', include('polvorin.urls')), 
       
     path('', include('usuarios.urls')),
+    path('guardias/', include('guardias.urls')),
 ]

@@ -1,0 +1,928 @@
+{% extends 'base.html' %}
+
+{% block content %}
+
+<style>
+
+    /* ================================
+       ENCABEZADO
+    ================================= */
+
+    .ingresos-header {
+        background: linear-gradient(135deg, #243b77, #1e3a8a);
+        color: white;
+        border-radius: 18px;
+        padding: 25px;
+        margin-bottom: 25px;
+        box-shadow: 0 8px 20px rgba(0,0,0,0.10);
+    }
+
+    .ingresos-header h3 {
+        margin: 0;
+        font-weight: 700;
+    }
+
+    .ingresos-header p {
+        margin: 5px 0 0;
+        opacity: 0.85;
+    }
+
+    /* ================================
+       FILTRO
+    ================================= */
+
+    .filtro-mes {
+        background: white;
+        border-radius: 16px;
+        padding: 18px;
+        margin-bottom: 25px;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.06);
+    }
+
+    /* ================================
+       RESUMEN
+    ================================= */
+
+    .resumen-card {
+        border: none;
+        border-radius: 18px;
+        padding: 22px;
+        height: 100%;
+        background: white;
+        box-shadow: 0 5px 18px rgba(0,0,0,0.07);
+    }
+
+    .resumen-icon {
+        width: 48px;
+        height: 48px;
+        border-radius: 14px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 22px;
+        margin-bottom: 12px;
+        background: #eef2ff;
+        color: #243b77;
+    }
+
+    .resumen-card h6 {
+        color: #6b7280;
+        font-weight: 600;
+        margin-bottom: 5px;
+    }
+
+    .resumen-card h3 {
+        color: #243b77;
+        font-weight: 700;
+        margin: 0;
+    }
+
+    .total-card {
+        background: linear-gradient(135deg, #198754, #157347);
+        color: white;
+    }
+
+    .total-card .resumen-icon {
+        background: rgba(255,255,255,0.18);
+        color: white;
+    }
+
+    .total-card h6,
+    .total-card h3 {
+        color: white;
+    }
+
+    /* ================================
+       TABLA
+    ================================= */
+
+    .tabla-card {
+        background: white;
+        border-radius: 18px;
+        padding: 20px;
+        margin-top: 25px;
+        box-shadow: 0 5px 18px rgba(0,0,0,0.07);
+    }
+
+    .tabla-titulo {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 18px;
+    }
+
+    .tabla-titulo h5 {
+        margin: 0;
+        font-weight: 700;
+        color: #243b77;
+    }
+
+    .tabla-contenedor {
+        width: 100%;
+        overflow-x: auto;
+    }
+
+    .tabla-ingresos {
+        width: 100%;
+        min-width: 750px;
+        margin-bottom: 0;
+    }
+
+    .tabla-ingresos thead th {
+        background: #243b77;
+        color: white;
+        border: none;
+        padding: 14px;
+        white-space: nowrap;
+    }
+
+    .tabla-ingresos tbody td {
+        padding: 14px;
+        vertical-align: middle;
+    }
+
+    .fecha {
+        font-weight: 700;
+        color: #243b77;
+        white-space: nowrap;
+    }
+
+    .actividad {
+        font-weight: 600;
+    }
+
+    .valor {
+        font-weight: 700;
+        color: #198754;
+        white-space: nowrap;
+    }
+
+    /* ================================
+       ESTADOS
+    ================================= */
+
+    .estado {
+        border-radius: 20px;
+        padding: 6px 12px;
+        font-size: 12px;
+        font-weight: 700;
+        white-space: nowrap;
+    }
+
+    /* ================================
+       LIQUIDACIÓN
+    ================================= */
+
+    .liquidacion-card {
+        margin-top: 25px;
+        padding: 25px;
+        background: white;
+        border-radius: 18px;
+        box-shadow: 0 5px 18px rgba(0,0,0,0.07);
+    }
+
+    .liquidacion-card h5 {
+        color: #243b77;
+        font-weight: 700;
+    }
+
+    .liquidacion-estado {
+        padding: 10px 18px;
+        border-radius: 25px;
+        font-weight: 700;
+    }
+
+    .acciones-liquidacion {
+        display: flex;
+        gap: 12px;
+        flex-wrap: wrap;
+        margin-top: 20px;
+    }
+
+    /* ================================
+       SIN REGISTROS
+    ================================= */
+
+    .sin-registros {
+        text-align: center;
+        padding: 60px 20px;
+        color: #6b7280;
+    }
+
+    .sin-registros i {
+        font-size: 55px;
+        color: #9ca3af;
+        margin-bottom: 15px;
+    }
+
+    /* ================================
+       RESPONSIVE
+    ================================= */
+
+    @media (max-width: 768px) {
+
+        .ingresos-header {
+            padding: 20px;
+            border-radius: 15px;
+        }
+
+        .ingresos-header h3 {
+            font-size: 22px;
+        }
+
+        .filtro-mes {
+            padding: 15px;
+        }
+
+        .resumen-card {
+            padding: 18px;
+        }
+
+        .tabla-card {
+            padding: 12px;
+            border-radius: 15px;
+        }
+
+        .tabla-contenedor {
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+        }
+
+        .tabla-ingresos {
+            min-width: 700px;
+        }
+
+        .liquidacion-card {
+            padding: 18px;
+        }
+
+        .acciones-liquidacion {
+            flex-direction: column;
+        }
+
+        .acciones-liquidacion .btn {
+            width: 100%;
+        }
+    }
+
+    /* ================================
+       TELÉFONOS PEQUEÑOS
+    ================================= */
+
+    @media (max-width: 480px) {
+
+        .ingresos-header {
+            padding: 18px;
+        }
+
+        .ingresos-header h3 {
+            font-size: 20px;
+        }
+
+        .resumen-card h3 {
+            font-size: 22px;
+        }
+
+        .tabla-titulo {
+            align-items: flex-start;
+            flex-direction: column;
+            gap: 8px;
+        }
+    }
+
+</style>
+
+
+<!-- ================================
+     ENCABEZADO
+================================= -->
+
+<div class="ingresos-header">
+
+    <h3>
+        <i class="bi bi-cash-stack me-2"></i>
+        Mis Ingresos
+    </h3>
+
+    <p>
+        Consulta de actividades e ingresos mensuales
+    </p>
+
+</div>
+
+
+<!-- ================================
+     FILTRO DE MES
+================================= -->
+
+<div class="filtro-mes">
+
+    <form method="GET">
+
+        <div class="row align-items-end g-3">
+
+            <div class="col-md-5">
+
+                <label class="form-label fw-bold">
+                    Mes
+                </label>
+
+                <select name="mes" class="form-select">
+
+                    <option value="1" {% if mes == 1 %}selected{% endif %}>
+                        Enero
+                    </option>
+
+                    <option value="2" {% if mes == 2 %}selected{% endif %}>
+                        Febrero
+                    </option>
+
+                    <option value="3" {% if mes == 3 %}selected{% endif %}>
+                        Marzo
+                    </option>
+
+                    <option value="4" {% if mes == 4 %}selected{% endif %}>
+                        Abril
+                    </option>
+
+                    <option value="5" {% if mes == 5 %}selected{% endif %}>
+                        Mayo
+                    </option>
+
+                    <option value="6" {% if mes == 6 %}selected{% endif %}>
+                        Junio
+                    </option>
+
+                    <option value="7" {% if mes == 7 %}selected{% endif %}>
+                        Julio
+                    </option>
+
+                    <option value="8" {% if mes == 8 %}selected{% endif %}>
+                        Agosto
+                    </option>
+
+                    <option value="9" {% if mes == 9 %}selected{% endif %}>
+                        Septiembre
+                    </option>
+
+                    <option value="10" {% if mes == 10 %}selected{% endif %}>
+                        Octubre
+                    </option>
+
+                    <option value="11" {% if mes == 11 %}selected{% endif %}>
+                        Noviembre
+                    </option>
+
+                    <option value="12" {% if mes == 12 %}selected{% endif %}>
+                        Diciembre
+                    </option>
+
+                </select>
+
+            </div>
+
+
+            <div class="col-md-4">
+
+                <label class="form-label fw-bold">
+                    Año
+                </label>
+
+                <input
+                    type="number"
+                    name="anio"
+                    value="{{ anio }}"
+                    class="form-control"
+                    min="2020"
+                    max="2100"
+                >
+
+            </div>
+
+
+            <div class="col-md-3">
+
+                <button class="btn btn-primary w-100">
+
+                    <i class="bi bi-search me-1"></i>
+
+                    Consultar
+
+                </button>
+
+            </div>
+
+        </div>
+
+    </form>
+
+</div>
+
+
+<!-- ================================
+     RESUMEN
+================================= -->
+
+<div class="row g-3">
+
+    <div class="col-12 col-md-4">
+
+        <div class="resumen-card">
+
+            <div class="resumen-icon">
+                <i class="bi bi-calendar-check"></i>
+            </div>
+
+            <h6>
+                Días trabajados
+            </h6>
+
+            <h3>
+                {{ dias_trabajados }}
+            </h3>
+
+        </div>
+
+    </div>
+
+
+    <div class="col-12 col-md-4">
+
+        <div class="resumen-card">
+
+            <div class="resumen-icon">
+                <i class="bi bi-list-check"></i>
+            </div>
+
+            <h6>
+                Actividades realizadas
+            </h6>
+
+            <h3>
+                {{ total_actividades }}
+            </h3>
+
+        </div>
+
+    </div>
+
+
+    <div class="col-12 col-md-4">
+
+        <div class="resumen-card total-card">
+
+            <div class="resumen-icon">
+                <i class="bi bi-currency-dollar"></i>
+            </div>
+
+            <h6>
+                Total generado
+            </h6>
+
+            <h3>
+                ${{ total_generado }}
+            </h3>
+
+        </div>
+
+    </div>
+
+</div>
+
+
+<!-- ================================
+     TABLA
+================================= -->
+
+<div class="tabla-card">
+
+    <div class="tabla-titulo">
+
+        <h5>
+            <i class="bi bi-calendar3 me-2"></i>
+            Detalle de actividades
+        </h5>
+
+        <span class="text-muted">
+            {{ mes }}/{{ anio }}
+        </span>
+
+    </div>
+
+
+    {% if registros %}
+
+    <div class="tabla-contenedor">
+
+        <table class="table table-hover tabla-ingresos">
+
+            <thead>
+
+                <tr>
+
+                    <th>Fecha</th>
+
+                    <th>Actividad</th>
+
+                    <th>Lugar</th>
+
+                    <th>Cantidad</th>
+
+                    <th>Valor unitario</th>
+
+                    <th>Total</th>
+
+                    <th>Estado</th>
+
+                    <th>Observación</th>
+
+                </tr>
+
+            </thead>
+
+
+            <tbody>
+
+                {% for registro in registros %}
+
+                <tr>
+
+                    <td class="fecha">
+
+                        {{ registro.fecha|date:"d/m/Y" }}
+
+                    </td>
+
+
+                    <td class="actividad">
+
+                        {{ registro.tipo_actividad.nombre }}
+
+                    </td>
+
+
+                    <td>
+
+                        {{ registro.lugar.nombre }}
+
+                    </td>
+
+
+                    <td>
+
+                        {{ registro.cantidad }}
+
+                    </td>
+
+
+                    <td>
+
+                        ${{ registro.valor_unitario }}
+
+                    </td>
+
+
+                    <td class="valor">
+
+                        ${{ registro.valor_total }}
+
+                    </td>
+
+
+                    <td>
+
+                        {% if registro.estado == 'CONFIRMADA' %}
+
+                            <span class="badge bg-success estado">
+                                <i class="bi bi-check-circle me-1"></i>
+                                Confirmada
+                            </span>
+
+                        {% elif registro.estado == 'IMPUGNADA' %}
+
+                            <span class="badge bg-warning text-dark estado">
+                                <i class="bi bi-exclamation-triangle me-1"></i>
+                                Impugnada
+                            </span>
+
+                        {% elif registro.estado == 'RECHAZADA' %}
+
+                            <span class="badge bg-danger estado">
+                                <i class="bi bi-x-circle me-1"></i>
+                                Rechazada
+                            </span>
+
+                        {% else %}
+
+                            <span class="badge bg-secondary estado">
+                                <i class="bi bi-clock me-1"></i>
+                                Pendiente
+                            </span>
+
+                        {% endif %}
+
+                    </td>
+
+
+                    <td>
+
+                        {{ registro.observacion|default:"-" }}
+
+                    </td>
+
+                </tr>
+
+                {% endfor %}
+
+            </tbody>
+
+        </table>
+
+    </div>
+
+    {% else %}
+
+    <div class="sin-registros">
+
+        <i class="bi bi-calendar-x d-block"></i>
+
+        <h5>
+            No existen actividades registradas
+        </h5>
+
+        <p>
+            No se encontraron actividades para
+            <strong>{{ mes }}/{{ anio }}</strong>.
+        </p>
+
+    </div>
+
+    {% endif %}
+
+</div>
+
+
+<!-- ================================
+     LIQUIDACIÓN
+================================= -->
+
+{% if liquidacion %}
+
+<div class="liquidacion-card">
+
+    <div class="d-flex justify-content-between align-items-center flex-wrap gap-3">
+
+        <div>
+
+            <h5>
+                <i class="bi bi-file-earmark-check me-2"></i>
+                Liquidación mensual
+            </h5>
+
+            <p class="text-muted mb-0">
+                {{ mes }}/{{ anio }}
+            </p>
+
+        </div>
+
+
+        <div>
+
+            {% if liquidacion.estado == 'ABIERTA' %}
+
+                <span class="badge bg-warning text-dark liquidacion-estado">
+                    <i class="bi bi-hourglass-split me-1"></i>
+                    Pendiente de revisión
+                </span>
+
+            {% elif liquidacion.estado == 'ACEPTADA' %}
+
+                <span class="badge bg-success liquidacion-estado">
+                    <i class="bi bi-check-circle me-1"></i>
+                    Aceptada
+                </span>
+
+            {% elif liquidacion.estado == 'IMPUGNADA' %}
+
+                <span class="badge bg-danger liquidacion-estado">
+                    <i class="bi bi-exclamation-circle me-1"></i>
+                    Impugnada
+                </span>
+
+            {% elif liquidacion.estado == 'CERRADA' %}
+
+                <span class="badge bg-secondary liquidacion-estado">
+                    <i class="bi bi-lock-fill me-1"></i>
+                    Cerrada
+                </span>
+
+            {% endif %}
+
+        </div>
+
+    </div>
+
+
+    <hr>
+
+
+    <div class="row g-3">
+
+        <div class="col-12 col-md-6">
+
+            <strong>
+                Total de actividades
+            </strong>
+
+            <div class="fs-4 text-primary fw-bold">
+
+                {{ liquidacion.total_actividades }}
+
+            </div>
+
+        </div>
+
+
+        <div class="col-12 col-md-6">
+
+            <strong>
+                Total generado
+            </strong>
+
+            <div class="fs-4 text-success fw-bold">
+
+                ${{ liquidacion.total_generado }}
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+    {% if liquidacion.estado == 'ABIERTA' %}
+
+    <div class="acciones-liquidacion">
+
+        <form
+            method="POST"
+            action="{% url 'aceptar_liquidacion' liquidacion.id %}"
+            onsubmit="return confirm('¿Está seguro de aceptar esta liquidación?');"
+            style="display:inline;"
+        >
+
+            {% csrf_token %}
+
+            <button type="submit" class="btn btn-success">
+
+                <i class="bi bi-check-circle me-2"></i>
+
+                Aceptar liquidación
+
+            </button>
+
+        </form>
+
+
+        <button
+            type="button"
+            class="btn btn-outline-danger"
+            data-bs-toggle="modal"
+            data-bs-target="#modalImpugnar"
+        >
+
+            <i class="bi bi-exclamation-triangle me-2"></i>
+
+            Impugnar liquidación
+
+        </button>
+
+    </div>
+
+
+    <!-- Modal de impugnación: debe existir siempre que la liquidación
+         esté ABIERTA, independientemente de si ya hay una observación
+         previa registrada. Antes solo se renderizaba dentro del bloque
+         "observacion_impugnacion", por lo que el botón de arriba no
+         encontraba el modal y no abría nada. -->
+    <div
+        class="modal fade"
+        id="modalImpugnar"
+        tabindex="-1"
+        aria-hidden="true"
+    >
+
+        <div class="modal-dialog modal-dialog-centered">
+
+            <div class="modal-content">
+
+                <div class="modal-header">
+
+                    <h5 class="modal-title">
+
+                        <i class="bi bi-exclamation-triangle text-danger me-2"></i>
+
+                        Impugnar liquidación
+
+                    </h5>
+
+                    <button
+                        type="button"
+                        class="btn-close"
+                        data-bs-dismiss="modal"
+                    ></button>
+
+                </div>
+
+
+                <form
+                    method="POST"
+                    action="{% url 'impugnar_liquidacion' liquidacion.id %}"
+                >
+
+                    {% csrf_token %}
+
+                    <div class="modal-body">
+
+                        <p class="text-muted">
+
+                            Indique el motivo por el cual no está de acuerdo
+                            con la liquidación presentada.
+
+                        </p>
+
+                        <label class="form-label fw-bold">
+
+                            Motivo de la impugnación
+
+                        </label>
+
+                        <textarea
+                            name="observacion_impugnacion"
+                            class="form-control"
+                            rows="5"
+                            required
+                            placeholder="Ejemplo: El día 15 no se registró la guardia realizada..."
+                        ></textarea>
+
+                    </div>
+
+
+                    <div class="modal-footer">
+
+                        <button
+                            type="button"
+                            class="btn btn-secondary"
+                            data-bs-dismiss="modal"
+                        >
+
+                            Cancelar
+
+                        </button>
+
+                        <button
+                            type="submit"
+                            class="btn btn-danger"
+                        >
+
+                            <i class="bi bi-send me-2"></i>
+
+                            Enviar impugnación
+
+                        </button>
+
+                    </div>
+
+                </form>
+
+            </div>
+
+        </div>
+
+    </div>
+
+    {% endif %}
+
+
+    {% if liquidacion.observacion_impugnacion %}
+
+    <div class="alert alert-warning mt-3 mb-0">
+
+        <strong>
+            Observación de impugnación:
+        </strong>
+
+        <br>
+
+        {{ liquidacion.observacion_impugnacion }}
+
+    </div>
+
+    {% endif %}
+
+</div>
+
+{% endif %}
+
+
+{% endblock %}
