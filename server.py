@@ -8,7 +8,7 @@ from django.core.wsgi import get_wsgi_application
 application = get_wsgi_application()
 
 print("=" * 60)
-print("ECUAMINERALES")
+print("ECUMINERALES")
 print("Servidor iniciado")
 print("http://127.0.0.1:8000")
 print("=" * 60)

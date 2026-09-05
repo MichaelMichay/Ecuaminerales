@@ -30,6 +30,8 @@ subprocess.run([
     "pyinstaller",
     "--onefile",
     "--windowed",
+    "--icon=logo.ico",
+    "--name=ECUMINERALES",
     "launcher.py"
 ])
 
@@ -43,6 +45,8 @@ subprocess.run([
     "pyinstaller",
     "--onefile",
     "--windowed",
+    "--icon=logo.ico",
+    "--name=ECUMINERALES_DESKTOP",
     "desktop.py"
 ])
 

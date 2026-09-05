@@ -1,209 +1,152 @@
 {% extends 'base.html' %}
 
 {% block content %}
-
-<div class="card shadow-sm">
-
+  <div class="card shadow-sm">
     <div class="card-body">
-
-        <div class="d-flex justify-content-between align-items-center mb-4">
-
-            <div>
-                <h3>Inventario</h3>
-                <p class="text-muted mb-0">
-                    Gestión de materiales.
-                </p>
-            </div>
-
-            <div class="d-flex gap-2">
-                <a href="{% url 'reporte_inventario_pdf' %}" class="btn btn-danger">
-                    Exportar PDF
-                </a>
-
-                <a href="{% url 'crear_insumo' %}" class="btn btn-primary">
-                    Nuevo Insumo
-                </a>
-            </div>
-
+      <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+          <h3>Inventario</h3>
+          <p class="text-muted mb-0">Gestión de materiales.</p>
         </div>
 
-        <hr>
+        <div class="d-flex gap-2">
+          <a href="{% url 'reporte_inventario_pdf' %}" class="btn btn-danger">Exportar PDF</a>
 
-        <div class="row mb-4 justify-content-end">
-
-            <div class="col-md-5">
-                <input type="text"
-                       id="buscarInsumo"
-                       class="form-control"
-                       placeholder="Buscar insumo, tipo, stock o estado...">
-            </div>
-
-            <div class="col-md-3">
-                <select id="filtroStock" class="form-select">
-                    <option value="">Todos los stocks</option>
-                    <option value="normal">Stock Normal</option>
-                    <option value="bajo">Stock Bajo</option>
-                </select>
-            </div>
-
-           
-                <div class="table-responsive tabla-usuarios-responsive">
-                    <table class="table table-hover" id="tablaInsumos">
-
-                        <thead>
-                            <tr>
-                                <th>Nombre</th>
-                                <th>Stock</th>
-                                <th>Unidad</th>
-                                <th>Número de Lote</th>
-                                <th>Estado</th>
-                                <th>Acciones</th>
-                            </tr>
-                        </thead>
-
-                        <tbody>
-
-                            {% for insumo in insumos %}
-
-                            <tr>
-
-                                <td>{{ insumo.nombre_insumo }}</td>
-
-
-                                <td>
-                                    {% if insumo.stock <= insumo.stock_minimo %}
-                                        <span class="badge bg-danger">
-                                            {{ insumo.stock }} - Stock bajo
-                                        </span>
-                                    {% else %}
-                                        <span class="badge bg-success">
-                                            {{ insumo.stock }} - Normal
-                                        </span>
-                                    {% endif %}
-                                </td>
-
-
-                                <td>{{ insumo.unidad_medida }}</td>
-
-                                <td>{{ insumo.numero_lote }}</td>
-
-                                <td>
-                                    {% if insumo.stock <= insumo.stock_minimo %}
-                                        <span class="badge bg-danger">
-                                            Alerta
-                                        </span>
-                                    {% else %}
-                                        <span class="badge bg-success">
-                                            Disponible
-                                        </span>
-                                    {% endif %}
-                                </td>
-
-                                <td>
-
-                                    <a href="{% url 'editar_insumo' insumo.id %}"
-                                       class="btn btn-sm btn-warning">
-                                        Editar
-                                    </a>
-
-                                    <a href="{% url 'eliminar_insumo' insumo.id %}"
-                                       class="btn btn-sm btn-danger"
-                                       onclick="confirmarEliminacion(event, this.href)">
-                                        Eliminar
-                                    </a>
-
-                                </td>
-
-                            </tr>
-
-                            {% empty %}
-
-                            <tr>
-                                <td colspan="8" class="text-center text-muted">
-                                    No existen insumos registrados.
-                                </td>
-                            </tr>
-
-                            {% endfor %}
-
-                        </tbody>
-
-                    </table>
+          <a href="{% url 'crear_insumo' %}" class="btn btn-primary">Nuevo Insumo</a>
         </div>
+      </div>
+
+      <hr />
+
+      <div class="row mb-4 justify-content-end">
+        <div class="col-md-5">
+          <input type="text" id="buscarInsumo" class="form-control" placeholder="Buscar insumo, tipo, stock o estado..." />
         </div>
 
-        <p id="sinResultadosInsumos"
-           class="text-center text-muted mt-3"
-           style="display: none;">
-            No se encontraron insumos con esa búsqueda.
-        </p>
-
-        <div id="paginacionInsumos">
-            {% include 'paginacion.html' %}
+        <div class="col-md-3">
+          <select id="filtroStock" class="form-select">
+            <option value="">Todos los stocks</option>
+            <option value="normal">Stock Normal</option>
+            <option value="bajo">Stock Bajo</option>
+          </select>
         </div>
 
+        <div class="table-responsive tabla-usuarios-responsive">
+          <table class="table table-hover" id="tablaInsumos">
+            <thead>
+              <tr>
+                <th>Nombre</th>
+                <th>Stock</th>
+                <th>Unidad</th>
+                <th>Número de Lote</th>
+                <th>Estado</th>
+                <th>Acciones</th>
+              </tr>
+            </thead>
+
+            <tbody>
+              {% for insumo in insumos %}
+                <tr>
+                  <td>{{ insumo.nombre_insumo }}</td>
+
+                  <td>
+                    {% if insumo.stock <= insumo.stock_minimo %}
+                      <span class="badge bg-danger">{{ insumo.stock }} - Stock bajo</span>
+                    {% else %}
+                      <span class="badge bg-success">{{ insumo.stock }} - Normal</span>
+                    {% endif %}
+                  </td>
+
+                  <td>{{ insumo.unidad_medida }}</td>
+
+                  <td>{{ insumo.numero_lote }}</td>
+
+                  <td>
+                    {% if insumo.stock <= insumo.stock_minimo %}
+                      <span class="badge bg-danger">Alerta</span>
+                    {% else %}
+                      <span class="badge bg-success">Disponible</span>
+                    {% endif %}
+                  </td>
+
+                  <td>
+                    <!-- Editar -->
+                    <a href="{% url 'editar_insumo' insumo.id %}" class="btn btn-sm btn-warning" title="Editar insumo"><i class="bi bi-pencil-fill"></i></a>
+
+                    <!-- Eliminar -->
+                    <a href="{% url 'eliminar_insumo' insumo.id %}" class="btn btn-sm btn-danger" title="Eliminar insumo" onclick="confirmarEliminacion(event, this.href)"><i class="bi bi-trash-fill"></i></a>
+                  </td>
+                </tr>
+              {% empty %}
+                <tr>
+                  <td colspan="8" class="text-center text-muted">No existen insumos registrados.</td>
+                </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <p id="sinResultadosInsumos" class="text-center text-muted mt-3" style="display: none;">No se encontraron insumos con esa búsqueda.</p>
+
+      <div id="paginacionInsumos">
+        {% include 'paginacion.html' %}
+      </div>
     </div>
+  </div>
 
-</div>
-
-<script>
-const buscarInsumo = document.getElementById('buscarInsumo');
-const filtroStock = document.getElementById('filtroStock');
-const filasInsumos = document.querySelectorAll('#tablaInsumos tbody tr');
-const sinResultadosInsumos = document.getElementById('sinResultadosInsumos');
-const paginacionInsumos = document.getElementById('paginacionInsumos');
-
-function filtrarInsumos() {
-
-    let texto = buscarInsumo.value.toLowerCase().trim();
-    let stock = filtroStock.value.toLowerCase();
-    let encontrados = 0;
-
-    filasInsumos.forEach(function(fila) {
-
-        let contenido = fila.textContent.toLowerCase();
-
-        let coincideTexto = contenido.includes(texto);
-
-        let esStockBajo = contenido.includes('stock bajo');
-        let esNormal = contenido.includes('normal');
-
-        let coincideStock =
-            stock === '' ||
-            (stock === 'bajo' && esStockBajo) ||
-            (stock === 'normal' && esNormal);
-
+  <script>
+    const buscarInsumo = document.getElementById('buscarInsumo')
+    const filtroStock = document.getElementById('filtroStock')
+    const filasInsumos = document.querySelectorAll('#tablaInsumos tbody tr')
+    const sinResultadosInsumos = document.getElementById('sinResultadosInsumos')
+    const paginacionInsumos = document.getElementById('paginacionInsumos')
+    
+    function filtrarInsumos() {
+      let texto = buscarInsumo.value.toLowerCase().trim()
+      let stock = filtroStock.value.toLowerCase()
+      let encontrados = 0
+    
+      filasInsumos.forEach(function (fila) {
+        let contenido = fila.textContent.toLowerCase()
+    
+        let coincideTexto = contenido.includes(texto)
+    
+        let esStockBajo = contenido.includes('stock bajo')
+        let esNormal = contenido.includes('normal')
+    
+        let coincideStock = stock === '' || (stock === 'bajo' && esStockBajo) || (stock === 'normal' && esNormal)
+    
         if (coincideTexto && coincideStock) {
-            fila.style.display = '';
-            encontrados++;
+          fila.style.display = ''
+          encontrados++
         } else {
-            fila.style.display = 'none';
+          fila.style.display = 'none'
         }
-
-    });
-
-    if (texto.length > 0 || stock !== '') {
-        paginacionInsumos.style.display = 'none';
-    } else {
-        paginacionInsumos.style.display = '';
+      })
+    
+      if (texto.length > 0 || stock !== '') {
+        paginacionInsumos.style.display = 'none'
+      } else {
+        paginacionInsumos.style.display = ''
+      }
+    
+      if (encontrados === 0 && (texto.length > 0 || stock !== '')) {
+        sinResultadosInsumos.style.display = 'block'
+      } else {
+        sinResultadosInsumos.style.display = 'none'
+      }
     }
+    
+    buscarInsumo.addEventListener('keyup', filtrarInsumos)
+    filtroStock.addEventListener('change', filtrarInsumos)
+  </script>
 
-    if (encontrados === 0 && (texto.length > 0 || stock !== '')) {
-        sinResultadosInsumos.style.display = 'block';
-    } else {
-        sinResultadosInsumos.style.display = 'none';
-    }
-}
-
-buscarInsumo.addEventListener('keyup', filtrarInsumos);
-filtroStock.addEventListener('change', filtrarInsumos);
-</script>
-
-<script>
-function confirmarEliminacion(event, url) {
-    event.preventDefault();
-
-    Swal.fire({
+  <script>
+    function confirmarEliminacion(event, url) {
+      event.preventDefault()
+    
+      Swal.fire({
         title: '¿Eliminar insumo?',
         text: 'Esta acción no se puede deshacer.',
         icon: 'warning',
@@ -212,12 +155,11 @@ function confirmarEliminacion(event, url) {
         cancelButtonColor: '#6c757d',
         confirmButtonText: 'Sí, eliminar',
         cancelButtonText: 'Cancelar'
-    }).then((result) => {
+      }).then((result) => {
         if (result.isConfirmed) {
-            window.location.href = url;
+          window.location.href = url
         }
-    });
-}
-</script>
-
+      })
+    }
+  </script>
 {% endblock %}

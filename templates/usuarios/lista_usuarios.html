@@ -45,15 +45,14 @@
                     <span class="badge bg-danger">Inactivo</span>
                   {% endif %}
                 </td>
-
                 <td>
-                   <div class="d-flex gap-2">
-                  <a href="{% url 'editar_usuario' usuario.id %}" class="btn btn-sm btn-warning">Editar</a>
-                  <a href="{% url 'eliminar_usuario' usuario.id %}" class="btn btn-sm btn-danger" onclick="confirmarEliminacion(event, this.href)">Eliminar</a>
-                  <a href="{% url 'restablecer_password_usuario' usuario.id %}" class="btn btn-sm btn-secondary">Contraseña</a>
-                   </div>
+                  <!-- Editar -->
+                  <a href="{% url 'editar_usuario' usuario.id %}" class="btn btn-sm btn-warning" title="Editar usuario"><i class="bi bi-pencil-fill"></i></a>
+                  <!-- Eliminar -->
+                  <a href="{% url 'eliminar_usuario' usuario.id %}" class="btn btn-sm btn-danger" title="Eliminar usuario" onclick="confirmarEliminacion(event, this.href)"><i class="bi bi-trash-fill"></i></a>
+                  <!-- Restablecer contraseña -->
+                  <a href="{% url 'restablecer_password_usuario' usuario.id %}" class="btn btn-sm btn-secondary" title="Restablecer contraseña"><i class="bi bi-key-fill"></i></a>
                 </td>
-            
               </tr>
             {% empty %}
               <tr>

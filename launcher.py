@@ -2,6 +2,7 @@ import tkinter as tk
 from tkinter import messagebox
 import json
 import os
+import sys
 import subprocess
 import requests
 
@@ -82,8 +83,15 @@ def abrir():
 
     ventana.destroy()
 
-    subprocess.Popen(["python", "desktop.py"])
+    ruta_desktop = os.path.join(
+        os.path.dirname(sys.executable),
+        "ECUMINERALES_DESKTOP.exe"
+    )
 
+    subprocess.Popen(
+        [ruta_desktop],
+        creationflags=subprocess.CREATE_NO_WINDOW
+    )
 
 # -----------------------------
 # Ventana

@@ -30,8 +30,8 @@
                 <td>{{ lugar.descripcion }}</td>
                 <td>
                   <div class="d-flex gap-2">
-                    <a href="{% url 'editar_lugar' lugar.id %}" class="btn btn-sm btn-warning">Editar</a>
-                    <a href="{% url 'eliminar_lugar' lugar.id %}" class="btn btn-sm btn-danger" onclick="confirmarEliminacion(event, this.href)">Eliminar</a>
+                    <a href="{% url 'editar_lugar' lugar.id %}" class="btn btn-sm btn-warning" title="Editar"><i class="bi bi-pencil-fill"></i></a>
+                    <a href="{% url 'eliminar_lugar' lugar.id %}" class="btn btn-sm btn-danger" title="Eliminar" onclick="confirmarEliminacion(event, this.href)"><i class="bi bi-trash-fill"></i></a>
                   </div>
                 </td>
               </tr>
