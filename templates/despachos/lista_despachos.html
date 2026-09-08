@@ -5,17 +5,47 @@
 <div class="card shadow-sm">
     <div class="card-body">
 
-        <div class="d-flex justify-content-between align-items-center mb-4">
+        <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-3">
             <div>
                 <h3>Historial de Despachos</h3>
                 <p class="text-muted mb-0">
                     Despachos realizados.
                 </p>
             </div>
-            <div class="d-flex gap-2">
-            <a href="{% url 'reporte_despachos_pdf' %}" class="btn btn-danger">
-                Exportar PDF
-            </a>
+
+            <!-- Panel de exportación de reporte semanal -->
+            <div class="panel-reporte">
+                <div class="panel-reporte-header">
+                    <i class="bi bi-file-earmark-bar-graph"></i>
+                    <span>Reporte semanal</span>
+                </div>
+
+                <div class="panel-reporte-body">
+                    <div class="input-group input-group-sm">
+                        <span class="input-group-text bg-white">
+                            <i class="bi bi-calendar3"></i>
+                        </span>
+                        <input type="date" id="fechaReporte" class="form-control">
+
+                        <button type="button" class="btn btn-outline-secondary dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
+                            Rápido
+                        </button>
+                        <ul class="dropdown-menu dropdown-menu-end shadow">
+                            <li><a class="dropdown-item" href="#" onclick="irSemana(0); return false;"><i class="bi bi-calendar-check me-2"></i>Semana actual</a></li>
+                            <li><a class="dropdown-item" href="#" onclick="irSemana(-7); return false;"><i class="bi bi-arrow-counterclockwise me-2"></i>Semana anterior</a></li>
+                            <li><a class="dropdown-item" href="#" onclick="irSemana(-14); return false;"><i class="bi bi-arrow-counterclockwise me-2"></i>Hace 2 semanas</a></li>
+                            <li><a class="dropdown-item" href="#" onclick="irSemana(-30); return false;"><i class="bi bi-arrow-counterclockwise me-2"></i>Hace 1 mes</a></li>
+                        </ul>
+                    </div>
+
+                    <div class="panel-reporte-rango" id="rangoSemana">
+                        Semana del ... al ...
+                    </div>
+
+                    <button type="button" class="btn btn-reporte-pdf w-100" onclick="generarReporte()">
+                        <i class="bi bi-file-earmark-pdf-fill"></i> Exportar PDF
+                    </button>
+                </div>
             </div>
         </div>
 
@@ -86,5 +116,120 @@
            {% include 'paginacion.html' %}
     </div>
 </div>
+
+<style>
+  .panel-reporte {
+    background: linear-gradient(135deg, #243b80 0%, #3a58b0 100%);
+    border-radius: 14px;
+    padding: 14px 16px;
+    min-width: 320px;
+    box-shadow: 0 6px 18px rgba(36, 59, 128, 0.25);
+  }
+
+  .panel-reporte-header {
+    color: #ffffff;
+    font-weight: 600;
+    font-size: 0.85rem;
+    letter-spacing: 0.02em;
+    text-transform: uppercase;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-bottom: 10px;
+    opacity: 0.9;
+  }
+
+  .panel-reporte-body {
+    background: #ffffff;
+    border-radius: 10px;
+    padding: 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .panel-reporte-rango {
+    font-size: 0.8rem;
+    color: #243b80;
+    font-weight: 600;
+    text-align: center;
+    background: #eef1fb;
+    border-radius: 8px;
+    padding: 6px 8px;
+  }
+
+  .btn-reporte-pdf {
+    background: linear-gradient(135deg, #dc3545 0%, #b8232f 100%);
+    color: #fff;
+    font-weight: 600;
+    border: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+  }
+
+  .btn-reporte-pdf:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 6px 14px rgba(220, 53, 69, 0.35);
+    color: #fff;
+  }
+
+  .panel-reporte-body .dropdown-toggle::after {
+    margin-left: 4px;
+  }
+</style>
+
+<script>
+  const inputFechaReporte = document.getElementById('fechaReporte');
+  const rangoSemanaEl = document.getElementById('rangoSemana');
+
+  const DIAS_CORTOS = ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom'];
+
+  function fmtISO(d) {
+    const pad = (n) => String(n).padStart(2, '0');
+    return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+  }
+
+  function fmtDisplay(d) {
+    const pad = (n) => String(n).padStart(2, '0');
+    return `${pad(d.getDate())}/${pad(d.getMonth() + 1)}/${d.getFullYear()}`;
+  }
+
+  function lunesDeLaSemana(d) {
+    const copia = new Date(d);
+    const diaSemana = (copia.getDay() + 6) % 7; // 0 = lunes
+    copia.setDate(copia.getDate() - diaSemana);
+    return copia;
+  }
+
+  function actualizarRango() {
+    if (!inputFechaReporte.value) return;
+    const [y, m, day] = inputFechaReporte.value.split('-').map(Number);
+    const fecha = new Date(y, m - 1, day);
+    const lunes = lunesDeLaSemana(fecha);
+    const domingo = new Date(lunes);
+    domingo.setDate(domingo.getDate() + 6);
+    rangoSemanaEl.textContent = `Semana del ${fmtDisplay(lunes)} al ${fmtDisplay(domingo)}`;
+  }
+
+  inputFechaReporte.value = fmtISO(new Date());
+  actualizarRango();
+  inputFechaReporte.addEventListener('change', actualizarRango);
+
+  function irSemana(diasAtras) {
+    const base = new Date();
+    base.setDate(base.getDate() + diasAtras);
+    inputFechaReporte.value = fmtISO(base);
+    actualizarRango();
+  }
+
+  function generarReporte() {
+    const fecha = inputFechaReporte.value;
+    if (!fecha) return;
+    window.open(`{% url 'reporte_despachos_pdf' %}?fecha=${fecha}`, '_blank');
+  }
+</script>
 
 {% endblock %}

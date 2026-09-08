@@ -18,4 +18,9 @@ urlpatterns = [
     path('perforista/', views.panel_perforista, name='panel_perforista'),
     path('perforista/mis-ordenes/', views.mis_ordenes_perforista, name='mis_ordenes_perforista'),
     path('editar-materiales/<int:orden_id>/', views.editar_materiales, name='editar_materiales'),
+path(
+    'despacho/<int:despacho_id>/editar-fecha/',
+    views.editar_fecha_despacho_ajax,
+    name='editar_fecha_despacho_ajax'
+),
 ]

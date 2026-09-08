@@ -1,31 +1,48 @@
-from django.shortcuts import render, redirect
-from django.contrib.auth.decorators import login_required
-from .models import OrdenTiro, DetalleOrdenTiro, Despacho, DetalleDespacho
-from inventario.models import Insumo, MovimientoInventario
-from django.contrib import messages
-from .forms import OrdenTiroForm, DetalleOrdenTiroForm
-from usuarios.decorators import rol_requerido
-from django.http import HttpResponse
-from reportlab.pdfgen import canvas
-from reportlab.lib.pagesizes import letter
-from django.core.paginator import Paginator
-from reportes.models import Notificacion, Auditoria  
-from usuarios.models import Usuario
-from reportlab.lib import colors
-from django.conf import settings
-from datetime import datetime
 import os
-from reportlab.lib.pagesizes import letter
-from reportlab.pdfgen import canvas
-from django.http import HttpResponse
-from .models import MaterialOrden
-from .forms import MaterialOrdenForm
-from inventario.models import Insumo
+import json
+from django.utils import timezone
+from django.utils.dateparse import parse_datetime
+from django.http import JsonResponse
+from decimal import Decimal
+from io import BytesIO
+from datetime import datetime, timedelta
+
+from django.conf import settings
+from django.contrib import messages
+from django.contrib.auth.decorators import login_required
+from django.core.paginator import Paginator
 from django.db.models import Q
-from .models import MaterialOrden
-from inventario.models import Insumo
-from django.shortcuts import render, redirect
+from django.http import HttpResponse
 from django.shortcuts import render, redirect, get_object_or_404
+
+from reportlab.lib import colors
+from reportlab.lib.pagesizes import letter
+from reportlab.lib.units import mm
+from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+from reportlab.lib.enums import TA_CENTER, TA_LEFT
+from reportlab.pdfgen import canvas
+from reportlab.platypus import (
+    SimpleDocTemplate,
+    Table,
+    TableStyle,
+    Paragraph,
+    Spacer,
+    Image as RLImage,
+)
+
+from .models import (
+    OrdenTiro,
+    DetalleOrdenTiro,
+    Despacho,
+    DetalleDespacho,
+    MaterialOrden,
+)
+from .forms import OrdenTiroForm, DetalleOrdenTiroForm, MaterialOrdenForm
+
+from inventario.models import Insumo, MovimientoInventario
+from reportes.models import Notificacion, Auditoria
+from usuarios.models import Usuario
+from usuarios.decorators import rol_requerido
 
 @login_required
 @rol_requerido(['Administrador', 'Bodeguero'])
@@ -74,7 +91,8 @@ def aprobar_orden_bodeguero(request, id):
         )
 
         return redirect('panel_bodeguero')
-
+    
+   
     # VALIDAR STOCK
 
     for material in materiales:
@@ -89,6 +107,13 @@ def aprobar_orden_bodeguero(request, id):
 
             return redirect('panel_bodeguero')
 
+    # CREAR DESPACHO (mover esto ANTES del bucle de movimientos)
+    despacho = Despacho.objects.create(
+        orden_tiro=orden,
+        bodeguero=request.user,
+        estado='ENTREGADO',
+        observacion='Despacho generado automáticamente.'
+    )
     # DESCONTAR INVENTARIO Y REGISTRAR KARDEX
 
     for material in materiales:
@@ -109,7 +134,8 @@ def aprobar_orden_bodeguero(request, id):
                 f'Salida por orden {orden.codigo_orden}'
             ),
             insumo=insumo,
-            usuario=request.user
+            usuario=request.user,
+            despacho=despacho,
         )
 
     # NOTIFICAR STOCK BAJO
@@ -138,14 +164,7 @@ def aprobar_orden_bodeguero(request, id):
                     )
                 )
 
-    # CREAR DESPACHO
-
-    despacho = Despacho.objects.create(
-        orden_tiro=orden,
-        bodeguero=request.user,
-        estado='ENTREGADO',
-        observacion='Despacho generado automáticamente.'
-    )
+    
 
     # DETALLE DEL DESPACHO
 
@@ -259,6 +278,7 @@ def calcular_materiales(cantidad_tiros, metros_mecha=1.8):
         'nitrato': nitrato
     }
 
+
 @login_required
 @rol_requerido(['Administrador', 'Bodeguero', 'Perforista'])
 def crear_orden(request):
@@ -287,6 +307,48 @@ def crear_orden(request):
 
             data['bodeguero'] = bodeguero.id
 
+        # ====================================
+        # VALIDACION DE FECHA DE LA ORDEN
+        # ====================================
+
+        fecha_orden_raw = data.get('fecha_orden')
+
+        fecha_orden_valor = timezone.now()
+
+        if fecha_orden_raw:
+
+            try:
+
+                fecha_parseada = datetime.strptime(
+                    fecha_orden_raw, '%Y-%m-%dT%H:%M'
+                )
+
+                if timezone.is_naive(fecha_parseada):
+                    fecha_parseada = timezone.make_aware(
+                        fecha_parseada,
+                        timezone.get_current_timezone()
+                    )
+
+                if fecha_parseada > timezone.now():
+
+                    messages.error(
+                        request,
+                        'La fecha de la orden no puede ser una fecha futura.'
+                    )
+
+                    return redirect('crear_orden')
+
+                fecha_orden_valor = fecha_parseada
+
+            except ValueError:
+
+                messages.error(
+                    request,
+                    'El formato de la fecha ingresada no es válido.'
+                )
+
+                return redirect('crear_orden')
+
         form_orden = OrdenTiroForm(data)
 
         if form_orden.is_valid():
@@ -294,6 +356,9 @@ def crear_orden(request):
             orden = form_orden.save(commit=False)
 
             orden.estado = 'PENDIENTE'
+
+            # Fecha elegida por el usuario (o "ahora" si no se cambió)
+            orden.fecha_orden = fecha_orden_valor
 
             orden.save()
 
@@ -940,6 +1005,112 @@ def reporte_ordenes_pdf(request):
 
     return response
 
+
+COLOR_AZUL_MARCA = colors.HexColor('#243b80')   # color corporativo ya usado en tu sistema
+COLOR_GRIS_GRUPO = colors.HexColor('#d9d9d9')   # FULMINANTE 
+COLOR_CREMA_GRUPO = colors.HexColor('#fdebd0')  # DINAMITA
+COLOR_VERDE_GRUPO = colors.HexColor('#d9ead3')  # MECHA LENTA
+COLOR_NARANJA_SALDO = colors.HexColor('#f5a623')  # columna SALDO destacada
+COLOR_GRIS_CLARO_LABEL = colors.HexColor('#f2f2f2')
+
+DIAS_SEMANA = ['Lunes', 'Martes', 'Miercoles', 'Jueves', 'Viernes', 'Sabado', 'Domingo']
+
+
+TIPO_MOVIMIENTO_ENTRADA = 'ENTRADA'
+
+
+PRODUCTOS_EXPLOSIVOS = [
+    {'nombre_insumo': 'FULMINANTE', 'nombre': 'FULMINANTE', 'color': COLOR_GRIS_GRUPO},
+    {'nombre_insumo': 'EMULNOR', 'nombre': 'EMULNOR', 'color': COLOR_CREMA_GRUPO},
+    {'nombre_insumo': 'MECHA_NEGRA', 'nombre': 'MECHA_NEGRA', 'color': COLOR_VERDE_GRUPO},
+]
+
+MOVIMIENTOS_POR_DIA = 7  
+
+
+
+def obtener_datos_producto_dia(producto_nombre_insumo, fecha_dia):
+    """
+    Devuelve los movimientos del día `fecha_dia` para el insumo cuyo
+    `nombre_insumo` coincide con `producto_nombre_insumo`, en la forma
+    que espera la tabla del reporte.
+    """
+    movimientos_qs = MovimientoInventario.objects.filter(
+        insumo__nombre_insumo__iexact=producto_nombre_insumo,
+        fecha_movimiento__date=fecha_dia,
+    ).order_by('fecha_movimiento')[:MOVIMIENTOS_POR_DIA]
+
+    movimientos = []
+    saldo_final = None
+    egreso_total = Decimal('0')
+    ingreso_total = Decimal('0')
+    saldo_inicial = None
+
+    for indice, mov in enumerate(movimientos_qs):
+        if indice == 0:
+            saldo_inicial = mov.stock_anterior
+
+        if mov.tipo_movimiento == TIPO_MOVIMIENTO_ENTRADA:
+            movimientos.append({'egreso': None, 'ingreso': mov.cantidad, 'saldo': mov.stock_actual})
+            ingreso_total += mov.cantidad or Decimal('0')
+        else:
+            movimientos.append({'egreso': mov.cantidad, 'ingreso': None, 'saldo': mov.stock_actual})
+            egreso_total += mov.cantidad or Decimal('0')
+
+        saldo_final = mov.stock_actual
+
+    # Completar con filas en blanco hasta MOVIMIENTOS_POR_DIA (igual que
+    # el formato en papel, que siempre muestra 6 líneas aunque sobren).
+    while len(movimientos) < MOVIMIENTOS_POR_DIA:
+        movimientos.append({'egreso': None, 'ingreso': None, 'saldo': None})
+
+    return {
+        'saldo_inicial': saldo_inicial,
+        'movimientos': movimientos,
+        'egreso_total': egreso_total if egreso_total else None,
+        'ingreso_total': ingreso_total if ingreso_total else None,
+        'saldo_final': saldo_final,
+    }
+
+
+def obtener_saldo_inicial_semana(producto_nombre_insumo, lunes_de_la_semana):
+    """
+    Saldo con el que arranca la semana: el `stock_actual` del último
+    movimiento anterior al lunes de esa semana. Si no hay movimientos
+    previos, usa el `stock_anterior` del primer movimiento de la semana.
+    """
+    ultimo_anterior = MovimientoInventario.objects.filter(
+        insumo__nombre_insumo__iexact=producto_nombre_insumo,
+        fecha_movimiento__date__lt=lunes_de_la_semana,
+    ).order_by('-fecha_movimiento').first()
+
+    if ultimo_anterior:
+        return ultimo_anterior.stock_actual
+
+    primero_semana = MovimientoInventario.objects.filter(
+        insumo__nombre_insumo__iexact=producto_nombre_insumo,
+        fecha_movimiento__date__gte=lunes_de_la_semana,
+    ).order_by('fecha_movimiento').first()
+
+    return primero_semana.stock_anterior if primero_semana else None
+
+
+def _fmt(valor):
+    """Formatea un valor numérico o deja la celda en blanco si es None."""
+    if valor is None:
+        return ''
+    return f'{valor:,.2f}'.replace(',', 'X').replace('.', ',').replace('X', '.')
+
+
+def _lunes_de_la_semana(fecha_referencia):
+    """Devuelve el lunes de la semana ISO que contiene fecha_referencia."""
+    return fecha_referencia - timedelta(days=fecha_referencia.weekday())
+
+
+# ---------------------------------------------------------------------
+# VISTA PRINCIPAL
+# ---------------------------------------------------------------------
+
 @login_required
 @rol_requerido(['Administrador', 'Bodeguero'])
 def reporte_despachos_pdf(request):
@@ -947,199 +1118,280 @@ def reporte_despachos_pdf(request):
     response = HttpResponse(content_type='application/pdf')
     response['Content-Disposition'] = 'attachment; filename="reporte_despachos.pdf"'
 
-    p = canvas.Canvas(response, pagesize=letter)
-    width, height = letter
+    # TODO(CONEXIÓN DE DATOS): decide si la semana se recibe por GET
+    # (?fecha=2026-09-07) o siempre es la semana actual.
+    fecha_param = request.GET.get('fecha')
+    if fecha_param:
+        try:
+            fecha_referencia = datetime.strptime(fecha_param, '%Y-%m-%d').date()
+        except ValueError:
+            fecha_referencia = timezone.localtime(timezone.now()).date()
+    else:
+        fecha_referencia = timezone.localtime(timezone.now()).date()
 
-    despachos = Despacho.objects.all().order_by('-fecha_despacho')
+    lunes = _lunes_de_la_semana(fecha_referencia)
+    fechas_semana = [lunes + timedelta(days=i) for i in range(7)]
 
-    def encabezado():
+   
+    buffer = BytesIO()
 
-        logo_path = os.path.join(
-            settings.BASE_DIR,
-            'static',
-            'img',
-            'logo_ecuaminerales.jpeg'
-        )
+    doc = SimpleDocTemplate(
+        buffer,
+        pagesize=letter,
+        leftMargin=20,
+        rightMargin=20,
+        topMargin=24,
+        bottomMargin=24,
+    )
 
-        if os.path.exists(logo_path):
-            p.drawImage(
-                logo_path,
-                40,
-                height - 90,
-                width=75,
-                height=55,
-                preserveAspectRatio=True,
-                mask='auto'
+    ancho_total = letter[0] - doc.leftMargin - doc.rightMargin
+
+    styles = getSampleStyleSheet()
+
+    estilo_titulo = ParagraphStyle(
+        'TituloReporte',
+        parent=styles['Heading1'],
+        alignment=TA_CENTER,
+        fontName='Helvetica-Bold',
+        fontSize=15,
+        spaceAfter=6,
+    )
+
+    estilo_celda = ParagraphStyle(
+        'CeldaTabla',
+        parent=styles['Normal'],
+        fontName='Helvetica',
+        fontSize=6.6,
+        alignment=TA_CENTER,
+        leading=7.8,
+    )
+
+    estilo_celda_bold = ParagraphStyle(
+        'CeldaTablaBold',
+        parent=estilo_celda,
+        fontName='Helvetica-Bold',
+    )
+
+    estilo_numero_fila = ParagraphStyle(
+        'NumeroFila',
+        parent=estilo_celda,
+        fontSize=6.6,
+    )
+
+    estilo_label_dia = ParagraphStyle(
+        'LabelDia',
+        parent=styles['Normal'],
+        fontName='Helvetica-Bold',
+        fontSize=7.2,
+        alignment=TA_LEFT,
+        leading=8.4,
+    )
+
+    elementos = []
+
+    elementos.append(Paragraph('CONTROL SEMANAL DE EXPLOSIVOS', estilo_titulo))
+
+    # --- Construcción de la matriz de la tabla ---
+
+    n_grupos = len(PRODUCTOS_EXPLOSIVOS)
+    n_columnas = 1 + n_grupos * 3  # 1 columna de etiqueta + 3 subcolumnas por producto
+
+    col_label_w = 42  # suficiente para "CONSUMO SEMANAL" en 2 líneas
+    col_dato_w = (ancho_total - col_label_w) / (n_grupos * 3)
+    anchos_columnas = [col_label_w] + [col_dato_w] * (n_grupos * 3)
+
+    data = []
+    estilos_tabla = [
+        ('GRID', (0, 0), (-1, -1), 0.5, colors.black),
+        ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
+        ('TOPPADDING', (0, 0), (-1, -1), 1.3),
+        ('BOTTOMPADDING', (0, 0), (-1, -1), 1.3),
+        ('LEFTPADDING', (0, 0), (-1, -1), 2),
+        ('RIGHTPADDING', (0, 0), (-1, -1), 2),
+    ]
+
+    # Fila 0: nombre de cada producto (spanning 3 columnas)
+    fila0 = ['']
+    for producto in PRODUCTOS_EXPLOSIVOS:
+        fila0 += [Paragraph(producto['nombre'], estilo_celda_bold), '', '']
+    data.append(fila0)
+
+    col_inicio = 1
+    for producto in PRODUCTOS_EXPLOSIVOS:
+        col_fin = col_inicio + 2
+        estilos_tabla.append(('SPAN', (col_inicio, 0), (col_fin, 0)))
+        estilos_tabla.append(('BACKGROUND', (col_inicio, 0), (col_fin, 0), producto['color']))
+        col_inicio = col_fin + 1
+
+    # Fila 1: EGRESO / INGRESO / SALDO por producto
+    fila1 = ['']
+    for _ in PRODUCTOS_EXPLOSIVOS:
+        fila1 += [
+            Paragraph('EGRESO', estilo_celda_bold),
+            Paragraph('INGRESO', estilo_celda_bold),
+            Paragraph('SALDO', estilo_celda_bold),
+        ]
+    data.append(fila1)
+
+    col_inicio = 1
+    for producto in PRODUCTOS_EXPLOSIVOS:
+        estilos_tabla.append(('BACKGROUND', (col_inicio, 1), (col_inicio + 1, 1), producto['color']))
+        estilos_tabla.append(('BACKGROUND', (col_inicio + 2, 1), (col_inicio + 2, 1), COLOR_NARANJA_SALDO))
+        col_inicio += 3
+
+    fila_header_repetir = 2  # filas 0 y 1 se repiten en cada página
+
+    # Acumuladores para el resumen final (SALDOS / CONSUMO SEMANAL),
+    # se van llenando a medida que recorremos los 7 días.
+    acumulado_semana = {
+        producto['nombre_insumo']: {
+            'egreso_total': Decimal('0'),
+            'ingreso_total': Decimal('0'),
+            'saldo_final': None,
+        }
+        for producto in PRODUCTOS_EXPLOSIVOS
+    }
+
+    # Fila 2: saldo inicial general de la semana (sin número de fila,
+    # igual que en el PDF de referencia)
+    fila2 = ['']
+    for producto in PRODUCTOS_EXPLOSIVOS:
+        saldo_inicial_semana = obtener_saldo_inicial_semana(producto['nombre_insumo'], lunes)
+        acumulado_semana[producto['nombre_insumo']]['saldo_final'] = saldo_inicial_semana
+        fila2 += [
+            Paragraph('', estilo_celda),
+            Paragraph('', estilo_celda),
+            Paragraph(_fmt(saldo_inicial_semana), estilo_celda_bold),
+        ]
+    data.append(fila2)
+    fila_actual = 2
+
+    col_inicio = 1
+    for producto in PRODUCTOS_EXPLOSIVOS:
+        estilos_tabla.append(('BACKGROUND', (col_inicio, fila_actual), (col_inicio + 1, fila_actual), producto['color']))
+        estilos_tabla.append(('BACKGROUND', (col_inicio + 2, fila_actual), (col_inicio + 2, fila_actual), COLOR_NARANJA_SALDO))
+        col_inicio += 3
+      
+    # --- Bloques por día ---
+    for dia_nombre, fecha_dia in zip(DIAS_SEMANA, fechas_semana):
+
+        fila_actual += 1
+        data.append([
+            Paragraph(
+                f' &nbsp;&nbsp;&nbsp;&nbsp;<b>FECHA:</b> {dia_nombre} '
+                f'({fecha_dia.strftime("%d/%m/%Y")})',
+                estilo_label_dia
             )
+        ] + [''] * (n_columnas - 1))
+        estilos_tabla.append(('SPAN', (0, fila_actual), (-1, fila_actual)))
+        estilos_tabla.append(('BACKGROUND', (0, fila_actual), (-1, fila_actual), COLOR_GRIS_CLARO_LABEL))
 
-        p.setFillColor(colors.HexColor('#243b80'))
-        p.setFont('Helvetica-Bold', 22)
+        datos_por_producto = {
+            producto['nombre_insumo']: obtener_datos_producto_dia(producto['nombre_insumo'], fecha_dia)
+            for producto in PRODUCTOS_EXPLOSIVOS
+        }
 
-        p.drawCentredString(
-            width / 2,
-            height - 45,
-            'ECUAMINERALES S.A.'
+        # Acumular totales del día en el resumen semanal
+        for producto in PRODUCTOS_EXPLOSIVOS:
+            datos_dia = datos_por_producto[producto['nombre_insumo']]
+            acumulado = acumulado_semana[producto['nombre_insumo']]
+            acumulado['egreso_total'] += datos_dia['egreso_total'] or Decimal('0')
+            acumulado['ingreso_total'] += datos_dia['ingreso_total'] or Decimal('0')
+            if datos_dia['saldo_final'] is not None:
+                acumulado['saldo_final'] = datos_dia['saldo_final']
+
+        for i in range(MOVIMIENTOS_POR_DIA):
+            fila_actual += 1
+            fila = [Paragraph(str(i + 1), estilo_numero_fila)]
+            for producto in PRODUCTOS_EXPLOSIVOS:
+                mov = datos_por_producto[producto['nombre_insumo']]['movimientos'][i]
+                fila += [
+                    Paragraph(_fmt(mov['egreso']), estilo_celda),
+                    Paragraph(_fmt(mov['ingreso']), estilo_celda),
+                    Paragraph(_fmt(mov['saldo']), estilo_celda),
+                ]
+            data.append(fila)
+
+            col_inicio = 1
+            for producto in PRODUCTOS_EXPLOSIVOS:
+                estilos_tabla.append((
+                    'BACKGROUND',
+                    (col_inicio, fila_actual), (col_inicio + 2, fila_actual),
+                    producto['color']
+                ))
+                col_inicio += 3
+    # --- Fila en blanco después del domingo ---
+    fila_actual += 1
+    fila_blanco = fila_actual
+    data.append([''] * n_columnas)
+    estilos_tabla.extend([
+    ('LINEABOVE', (0, fila_blanco), (-1, fila_blanco), 0, colors.black),
+    ('LINEBELOW', (0, fila_blanco), (-1, fila_blanco), 0, colors.black),
+    ('LINEBEFORE', (0, fila_blanco), (-1, fila_blanco), 0, colors.white),
+    ('LINEAFTER', (0, fila_blanco), (-1, fila_blanco), 0, colors.white),
+    ('INNERGRID', (0, fila_blanco), (-1, fila_blanco), 0, colors.white),
+    ])
+    # --- Fila única: SALDOS + Productos + Valores ---
+    fila_actual += 1
+
+    fila_saldos = [Paragraph('SALDOS', estilo_celda_bold)]
+
+    for producto in PRODUCTOS_EXPLOSIVOS:
+     acumulado = acumulado_semana[producto['nombre_insumo']]
+     fila_saldos += [
+        Paragraph(producto['nombre'], estilo_celda_bold),  # ocupa 2 columnas
+        '',
+        Paragraph(_fmt(acumulado['saldo_final']), estilo_celda_bold)  # celda naranja
+    ]
+
+    data.append(fila_saldos)
+
+    # Mantener el mismo estilo del encabezado original
+    col_inicio = 1
+    for producto in PRODUCTOS_EXPLOSIVOS:
+     estilos_tabla.append(('SPAN', (col_inicio, fila_actual), (col_inicio + 1, fila_actual)))
+     estilos_tabla.append(('BACKGROUND', (col_inicio, fila_actual), (col_inicio + 1, fila_actual), producto['color']))
+     estilos_tabla.append(('BACKGROUND', (col_inicio + 2, fila_actual), (col_inicio + 2, fila_actual), COLOR_NARANJA_SALDO))
+     col_inicio += 3
+
+    fila_actual += 1
+    fila_consumo = [Paragraph('CONSUMO SEMANAL', estilo_celda_bold)]
+    for producto in PRODUCTOS_EXPLOSIVOS:
+        acumulado = acumulado_semana[producto['nombre_insumo']]
+        fila_consumo += [
+            Paragraph(_fmt(acumulado['egreso_total'] or None), estilo_celda),
+            Paragraph(_fmt(acumulado['ingreso_total'] or None), estilo_celda),
+            Paragraph('', estilo_celda),
+        ]
+    data.append(fila_consumo)
+
+    tabla = Table(
+        data,
+        colWidths=anchos_columnas,
+        repeatRows=fila_header_repetir,
+    )
+    tabla.setStyle(TableStyle(estilos_tabla))
+
+    elementos.append(tabla)
+
+    # --- Pie de página (numeración) ---
+    def pie_pagina(canvas_obj, doc_obj):
+        canvas_obj.saveState()
+        canvas_obj.setFont('Helvetica', 8)
+        canvas_obj.setFillColor(colors.grey)
+        canvas_obj.drawRightString(
+            letter[0] - doc_obj.rightMargin, 12,
+            f'Página {doc_obj.page}'
         )
+        canvas_obj.restoreState()
 
-        p.setFillColor(colors.black)
-        p.setFont('Helvetica-Bold', 15)
+    doc.build(elementos, onFirstPage=pie_pagina, onLaterPages=pie_pagina)
 
-        p.drawCentredString(
-            width / 2,
-            height - 70,
-            'Reporte de Despachos'
-        )
-
-        p.setFillColor(colors.HexColor('#555555'))
-        p.setFont('Helvetica-Oblique', 9)
-
-        p.drawCentredString(
-            width / 2,
-            height - 88,
-            'Sistema de Control de Explosivos e Inventario'
-        )
-
-        p.setFillColor(colors.black)
-        p.setFont('Helvetica', 9)
-
-        p.drawString(
-            40,
-            height - 115,
-            f'Generado por: {request.user.username}'
-        )
-
-        p.drawRightString(
-            width - 40,
-            height - 115,
-            f'Fecha: {datetime.now().strftime("%d/%m/%Y %H:%M")}'
-        )
-
-        p.setStrokeColor(colors.HexColor('#243b80'))
-        p.setLineWidth(1)
-        p.line(40, height - 130, width - 40, height - 130)
-
-    def cabecera_tabla(y):
-
-        p.setFillColor(colors.HexColor('#243b80'))
-        p.rect(40, y - 6, width - 80, 22, fill=True, stroke=False)
-
-        p.setFillColor(colors.white)
-        p.setFont('Helvetica-Bold', 8)
-
-        p.drawString(45, y, 'FECHA')
-        p.drawString(155, y, 'ORDEN')
-        p.drawString(245, y, 'BODEGUERO')
-        p.drawString(370, y, 'ESTADO')
-        p.drawString(465, y, 'OBSERVACIÓN')
-
-        p.setFillColor(colors.black)
-
-    def pie_pagina():
-
-        p.setFont('Helvetica', 8)
-        p.setFillColor(colors.grey)
-
-        p.drawString(
-            40,
-            40,
-            'ECUMINERALES S.A. - Sistema de control de explosivos e inventario'
-        )
-
-        p.drawRightString(
-            width - 40,
-            40,
-            f'Página {p.getPageNumber()}'
-        )
-
-    encabezado()
-
-    y = height - 165
-    cabecera_tabla(y)
-    y -= 28
-
-    contador = 0
-
-    for despacho in despachos:
-
-        if contador % 2 == 0:
-            p.setFillColor(colors.HexColor('#f2f4f8'))
-            p.rect(40, y - 5, width - 80, 20, fill=True, stroke=False)
-
-        p.setFillColor(colors.black)
-        p.setFont('Helvetica', 8)
-
-        p.drawString(
-            45,
-            y,
-            despacho.fecha_despacho.strftime('%d/%m/%Y %H:%M')
-        )
-
-        p.drawString(
-            155,
-            y,
-            str(despacho.orden_tiro.codigo_orden)[:14]
-        )
-
-        p.drawString(
-            245,
-            y,
-            str(despacho.bodeguero.username)[:18]
-        )
-
-        estado = str(despacho.estado)
-
-        if estado == 'ENTREGADO':
-            color_estado = '#198754'
-        elif estado == 'PENDIENTE':
-            color_estado = '#ffc107'
-        elif estado == 'RECHAZADO':
-            color_estado = '#dc3545'
-        else:
-            color_estado = '#6c757d'
-
-        p.setFillColor(colors.HexColor(color_estado))
-        p.roundRect(370, y - 4, 75, 14, 4, fill=True, stroke=False)
-
-        if estado == 'PENDIENTE':
-            p.setFillColor(colors.black)
-        else:
-            p.setFillColor(colors.white)
-
-        p.setFont('Helvetica-Bold', 7)
-        p.drawCentredString(407, y, estado)
-
-        p.setFillColor(colors.black)
-        p.setFont('Helvetica', 8)
-
-        observacion = despacho.observacion if despacho.observacion else 'Sin observación'
-
-        p.drawString(
-            465,
-            y,
-            str(observacion)[:20]
-        )
-
-        y -= 22
-        contador += 1
-
-        if y < 80:
-
-            pie_pagina()
-            p.showPage()
-
-            encabezado()
-
-            y = height - 165
-            cabecera_tabla(y)
-            y -= 28
-
-    pie_pagina()
-
-    p.showPage()
-    p.save()
+    pdf_bytes = buffer.getvalue()
+    buffer.close()
+    response.write(pdf_bytes)
 
     return response
-
 
 @login_required
 @rol_requerido(['Administrador', 'Bodeguero'])
@@ -1267,3 +1519,43 @@ def editar_materiales(request, orden_id):
             'insumos': Insumo.objects.all()
         }
     )
+    
+    import json
+
+from django.http import JsonResponse
+from django.shortcuts import get_object_or_404
+from django.utils.dateparse import parse_datetime
+from django.views.decorators.http import require_POST
+
+
+from inventario.models import MovimientoInventario
+
+@login_required
+@require_POST
+def editar_fecha_despacho_ajax(request, despacho_id):
+    try:
+        despacho = get_object_or_404(Despacho, id=despacho_id)
+        data = json.loads(request.body)
+        fecha = parse_datetime(data.get('fecha_despacho'))
+
+        if not fecha:
+            return JsonResponse({'success': False, 'error': 'Fecha inválida'})
+
+        if timezone.is_naive(fecha):
+            fecha = timezone.make_aware(fecha, timezone.get_current_timezone())
+
+        despacho.fecha_despacho = fecha
+        despacho.save()
+
+        # PROPAGAR LA FECHA A LOS MOVIMIENTOS VINCULADOS
+        MovimientoInventario.objects.filter(despacho=despacho).update(
+            fecha_movimiento=fecha
+        )
+
+        return JsonResponse({
+            'success': True,
+            'fecha_formateada': timezone.localtime(fecha).strftime('%d/%m/%Y %H:%M')
+        })
+
+    except Exception as e:
+        return JsonResponse({'success': False, 'error': str(e)})

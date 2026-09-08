@@ -52,6 +52,8 @@ class LugarConsumo(models.Model):
         return self.nombre
 
 
+
+    
 class MovimientoInventario(models.Model):
     TIPO_MOVIMIENTO = (
         ('ENTRADA', 'ENTRADA'),
@@ -67,6 +69,15 @@ class MovimientoInventario(models.Model):
 
     insumo = models.ForeignKey(Insumo, on_delete=models.CASCADE)
     usuario = models.ForeignKey(Usuario, on_delete=models.CASCADE)
+
+    # NUEVO CAMPO
+    despacho = models.ForeignKey(
+        'despachos.Despacho',
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+        related_name='movimientos_inventario'
+    )
 
     def __str__(self):
         return f"{self.tipo_movimiento} - {self.insumo.nombre_insumo}"

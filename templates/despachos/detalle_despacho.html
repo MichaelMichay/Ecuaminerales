@@ -28,17 +28,30 @@
 
         <div class="col-md-4">
           <strong>Nombre:</strong>
-          <p>
-            {{ despacho.orden_tiro.perforista.first_name }} {{ despacho.orden_tiro.perforista.last_name }}
-          </p>
+          <p>{{ despacho.orden_tiro.perforista.first_name }} {{ despacho.orden_tiro.perforista.last_name }}</p>
         </div>
 
         <div class="col-md-4">
           <strong>Fecha:</strong>
 
-          <p>{{ despacho.fecha_despacho|date:'d/m/Y H:i' }}</p>
+          <div class="d-flex align-items-center gap-2 mt-1">
+            <!-- Visualización normal -->
+            <span id="fechaTexto">{{ despacho.fecha_despacho|date:'d/m/Y H:i' }}</span>
+
+            <!-- Input oculto inicialmente -->
+            <input type="datetime-local" id="fechaInput" value="{{ despacho.fecha_despacho|date:'Y-m-d\TH:i' }}" class="form-control form-control-sm" style="display: none; max-width: 220px;" />
+
+            <!-- Botón editar -->
+            <button type="button" id="btnEditarFecha" class="btn btn-sm btn-outline-primary" title="Editar fecha"><i class="bi bi-pencil"></i></button>
+
+            <!-- Botón guardar -->
+            <button type="button" id="btnGuardarFecha" class="btn btn-sm btn-success" style="display: none;" title="Guardar"><i class="bi bi-check-lg"></i></button>
+
+            <!-- Botón cancelar -->
+            <button type="button" id="btnCancelarFecha" class="btn btn-sm btn-secondary" style="display: none;" title="Cancelar"><i class="bi bi-x-lg"></i></button>
+          </div>
         </div>
-         
+
         <div class="col-md-8">
           <strong>Lugar de consumo:</strong>
 
@@ -51,8 +64,6 @@
             <span class="badge bg-success">{{ despacho.estado }}</span>
           </p>
         </div>
-
-        
       </div>
 
       <h5>Materiales entregados</h5>
@@ -85,4 +96,90 @@
       </div>
     </div>
   </div>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', function () {
+      const fechaTexto = document.getElementById('fechaTexto')
+      const fechaInput = document.getElementById('fechaInput')
+    
+      const btnEditar = document.getElementById('btnEditarFecha')
+      const btnGuardar = document.getElementById('btnGuardarFecha')
+      const btnCancelar = document.getElementById('btnCancelarFecha')
+    
+      // EDITAR
+      btnEditar.addEventListener('click', function () {
+        fechaTexto.style.display = 'none'
+        fechaInput.style.display = 'block'
+    
+        btnEditar.style.display = 'none'
+        btnGuardar.style.display = 'inline-block'
+        btnCancelar.style.display = 'inline-block'
+      })
+    
+      // CANCELAR
+      btnCancelar.addEventListener('click', function () {
+        fechaTexto.style.display = 'inline'
+        fechaInput.style.display = 'none'
+    
+        btnEditar.style.display = 'inline-block'
+        btnGuardar.style.display = 'none'
+        btnCancelar.style.display = 'none'
+      })
+    
+      // GUARDAR
+btnGuardar.addEventListener('click', function () {
+  const nuevaFecha = fechaInput.value
+
+  if (!nuevaFecha) {
+    alert('Seleccione una fecha válida')
+    return
+  }
+
+  fetch("{% url 'editar_fecha_despacho_ajax' despacho.id %}", {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'X-CSRFToken': '{{ csrf_token }}'
+    },
+    body: JSON.stringify({
+      fecha_despacho: nuevaFecha
+    })
+  })
+    .then(async (response) => {
+      console.log('Status:', response.status)
+
+      let data
+      try {
+        data = await response.json()
+      } catch (e) {
+        const texto = await response.text()
+        console.error('Respuesta no es JSON:', texto)
+        alert(`Error del servidor (status ${response.status}). Revisa la consola.`)
+        return
+      }
+
+      console.log('Data recibida:', data)
+
+      if (data.success) {
+        fechaTexto.textContent = data.fecha_formateada
+
+        fechaTexto.style.display = 'inline'
+        fechaInput.style.display = 'none'
+
+        btnEditar.style.display = 'inline-block'
+        btnGuardar.style.display = 'none'
+        btnCancelar.style.display = 'none'
+      } else {
+        const mensajeError = data.error || data.message || 'Error desconocido'
+        console.error('Error del backend:', mensajeError)
+        alert(`Error al actualizar la fecha: ${mensajeError}`)
+      }
+    })
+    .catch((error) => {
+      console.error('Error de red/JS:', error)
+      alert(`Ocurrió un error: ${error.message}`)
+    })
+})
+    })
+  </script>
 {% endblock %}

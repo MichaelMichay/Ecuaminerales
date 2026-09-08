@@ -1,4 +1,5 @@
 from django.db import models
+from django.utils import timezone
 from usuarios.models import Usuario
 from inventario.models import Insumo, LugarConsumo
 import random
@@ -21,7 +22,7 @@ class OrdenTiro(models.Model):
         unique=True,
         default=generar_codigo
     )
-    fecha_orden = models.DateTimeField(auto_now_add=True)
+    fecha_orden = models.DateTimeField(default=timezone.now)
     cantidad_tiros = models.IntegerField(default=0)
 
     metros_mecha = models.DecimalField(
@@ -82,7 +83,7 @@ class Despacho(models.Model):
         ('ENTREGADO', 'ENTREGADO'),
     )
 
-    fecha_despacho = models.DateTimeField(auto_now_add=True)
+    fecha_despacho = models.DateTimeField(default=timezone.now)
 
     estado = models.CharField(
         max_length=20,

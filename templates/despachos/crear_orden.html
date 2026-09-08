@@ -1,125 +1,147 @@
 {% extends 'base.html' %}
 
 {% block content %}
-
-<div class="card shadow-sm">
-
+  <div class="card shadow-sm">
     <div class="card-body">
-
-        <div class="d-flex justify-content-between align-items-center mb-4">
-
-            <div>
-
-                <h3>Nueva Orden</h3>
-
-                <p class="text-muted mb-0">
-                    Registro.
-                </p>
-
-            </div>
-
-            <a href="{% url 'ordenes' %}" class="btn btn-secondary">
-                Volver
-            </a>
-
+      <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+          <h3>Nueva Orden</h3>
+          <p class="text-muted mb-0">Registro.</p>
         </div>
+        <a href="{% url 'ordenes' %}" class="btn btn-secondary">Volver</a>
+      </div>
 
-        <hr>
+      <hr />
 
-        {% if error_stock %}
+      {% if error_stock %}
+        <div class="alert alert-danger">{{ error_stock }}</div>
+      {% endif %}
 
-        <div class="alert alert-danger">
+      <form method="POST" id="formOrden">
+        {% csrf_token %}
 
-            {{ error_stock }}
+        <h5>Información de la orden</h5>
 
-        </div>
+        <div class="row mt-3">
+          <div class="col-md-6 mb-3">
+            <label class="form-label">Cantidad de tiros</label>
+            {{ form_orden.cantidad_tiros }}
+          </div>
 
-        {% endif %}
+          <div class="col-md-6 mb-3">
+            <label class="form-label">Metros de mecha por tiro</label>
+            {{ form_orden.metros_mecha }}
+            <small class="text-muted">Ejemplo: 1.8 metros por cada tiro.</small>
+          </div>
 
-        <form method="POST">
+          <div class="col-md-6 mb-3">
+            <label class="form-label">Lugar de consumo</label>
+            {{ form_orden.lugar }}
+          </div>
 
-            {% csrf_token %}
+          <div class="col-md-6 mb-3">
+            <label class="form-label">Perforista / Barrenador</label>
+            {{ form_orden.perforista }}
+          </div>
 
-            <h5>Información de la orden</h5>
+          <div class="col-md-6 mb-3">
+            <label class="form-label">Bodeguero</label>
+            {{ form_orden.bodeguero }}
+          </div>
 
-            <div class="row mt-3">
-
-                <div class="col-md-6 mb-3">
-
-                    <label class="form-label">
-                        Cantidad de tiros
-                    </label>
-
-                    {{ form_orden.cantidad_tiros }}
-
-                </div>
-                <div class="col-md-6 mb-3">
-
-                    <label class="form-label">
-                        Metros de mecha por tiro
-                    </label>
-
-                    {{ form_orden.metros_mecha }}
-
-                    <small class="text-muted">
-                        Ejemplo: 1.8 metros por cada tiro.
-                    </small>
-
-                </div>
-                <div class="col-md-6 mb-3">
-
-                    <label class="form-label">
-                        Lugar de consumo
-                    </label>
-
-                    {{ form_orden.lugar }}
-
-                </div>
-
-                <div class="col-md-6 mb-3">
-
-                    <label class="form-label">
-                        Perforista / Barrenador
-                    </label>
-
-                    {{ form_orden.perforista }}
-
-                </div>
-
-                <div class="col-md-6 mb-3">
-
-                    <label class="form-label">
-                        Bodeguero
-                    </label>
-
-                    {{ form_orden.bodeguero }}
-
-                </div>
-
-                <div class="col-12 mb-3">
-
-                    <label class="form-label">
-                        Observación
-                    </label>
-
-                    {{ form_orden.observacion }}
-
-                </div>
-
-            </div>
-
-            <hr>
-
-            <button type="submit" class="btn btn-primary">
-
-                Guardar Orden
-
-            </button>
-
-        </form>
-
-    </div>
-
+          <div class="col-md-4">
+  <strong>Fecha:</strong>
+  <div class="d-flex align-items-center gap-2 mt-1">
+    <span id="fechaTexto"></span>
+    <input
+      type="datetime-local"
+      id="fechaInput"
+      name="fecha_orden"
+      class="form-control form-control-sm"
+      style="display: none; max-width: 220px;"
+    />
+    <button type="button" id="btnEditarFecha" class="btn btn-sm btn-outline-primary" title="Editar fecha">
+      <i class="bi bi-pencil"></i>
+    </button>
+    <button type="button" id="btnGuardarFecha" class="btn btn-sm btn-success" style="display: none;" title="Guardar">
+      <i class="bi bi-check-lg"></i>
+    </button>
+    <button type="button" id="btnCancelarFecha" class="btn btn-sm btn-secondary" style="display: none;" title="Cancelar">
+      <i class="bi bi-x-lg"></i>
+    </button>
+  </div>
+  <small class="text-muted d-block mt-1">Por defecto se usa la fecha y hora actuales. Puedes elegir una fecha anterior si lo necesitas.</small>
 </div>
 
+          <div class="col-12 mb-3">
+            <label class="form-label">Observación</label>
+            {{ form_orden.observacion }}
+          </div>
+        </div>
+
+        <hr />
+
+        <button type="submit" class="btn btn-primary">Guardar Orden</button>
+      </form>
+    </div>
+  </div>
+
+ <script>
+  (function () {
+    const fechaTexto = document.getElementById('fechaTexto');
+    const fechaInput = document.getElementById('fechaInput');
+    const btnEditar = document.getElementById('btnEditarFecha');
+    const btnGuardar = document.getElementById('btnGuardarFecha');
+    const btnCancelar = document.getElementById('btnCancelarFecha');
+
+    function toDatetimeLocalValue(date) {
+      const pad = (n) => String(n).padStart(2, '0');
+      return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`;
+    }
+
+    function toDisplayValue(date) {
+      const pad = (n) => String(n).padStart(2, '0');
+      return `${pad(date.getDate())}/${pad(date.getMonth() + 1)}/${date.getFullYear()} ${pad(date.getHours())}:${pad(date.getMinutes())}`;
+    }
+
+    const ahoraStr = toDatetimeLocalValue(new Date());
+
+    // El input SIEMPRE lleva el valor real que se envía, desde el inicio.
+    fechaInput.value = ahoraStr;
+    fechaInput.max = ahoraStr;
+    fechaTexto.textContent = toDisplayValue(new Date());
+
+    let valorPrevio = fechaInput.value;
+
+    btnEditar.addEventListener('click', function () {
+      valorPrevio = fechaInput.value;
+      fechaTexto.style.display = 'none';
+      fechaInput.style.display = 'inline-block';
+      btnEditar.style.display = 'none';
+      btnGuardar.style.display = 'inline-block';
+      btnCancelar.style.display = 'inline-block';
+    });
+
+    btnGuardar.addEventListener('click', function () {
+      if (fechaInput.value > ahoraStr) {
+        fechaInput.value = ahoraStr;
+      }
+      fechaTexto.textContent = toDisplayValue(new Date(fechaInput.value));
+      volverAVista();
+    });
+
+    btnCancelar.addEventListener('click', function () {
+      fechaInput.value = valorPrevio;
+      volverAVista();
+    });
+
+    function volverAVista() {
+      fechaTexto.style.display = 'inline';
+      fechaInput.style.display = 'none';
+      btnEditar.style.display = 'inline-block';
+      btnGuardar.style.display = 'none';
+      btnCancelar.style.display = 'none';
+    }
+  })();
+</script>
 {% endblock %}
