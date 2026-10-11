@@ -1,0 +1,18 @@
+{% extends 'publico/base_publico.html' %}
+{% block title %}
+  {{ c.titulo }} · ECUMINERALES
+{% endblock %}
+{% block buscador %}
+  <div></div>
+{% endblock %}
+{% block content %}
+  <article class="blk detalle">
+    <a class="link" href="{% url 'publico:inicio' %}#comunicados">← Volver</a>
+    <span class="tag">Comunicado · {{ c.fecha_publicacion|date:'d/m/Y' }}</span>
+    <h1>{{ c.titulo }}</h1>
+    <p class="lead">{{ c.resumen }}</p>
+    {% if c.contenido %}
+      <div class="cuerpo">{{ c.contenido|linebreaks }}</div>
+    {% endif %}
+  </article>
+{% endblock %}

@@ -16,14 +16,24 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path , include
+from django.conf import settings
+from django.urls import path, include, re_path
+from django.views.static import serve
 
 urlpatterns = [
+    path('', include('publico.urls')),
     path('admin/', admin.site.urls),
     path('inventario/', include('inventario.urls')),
     path('ordenes/', include('despachos.urls')),
     path('reportes/', include('reportes.urls')),
     path('polvorin/', include('polvorin.urls')), 
       
-    path('', include('usuarios.urls')),
+     path('', include('publico.urls')),
+    path('sistema/pagina-publica/', include('publico.urls_panel')),   # ← nueva
+    path('sistema/', include('usuarios.urls')),
+    
+    path('sistema/', include('usuarios.urls')),
     path('guardias/', include('guardias.urls')),
+    
+    re_path(r'^media/(?P<path>.*)$', serve, {'document_root': settings.MEDIA_ROOT}),
 ]

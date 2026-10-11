@@ -1,0 +1,28 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="mb-3">
+  <h3 class="mb-0">{{ cat.nombre_categoria }}</h3>
+  <small class="text-muted">Cómo se muestra esta categoría en la página pública.</small>
+</div>
+
+<div class="alert alert-warning" style="max-width: 760px;">
+  <i class="bi bi-exclamation-triangle-fill me-1"></i>
+  Si activas <em>Mostrar insumos</em>, su nombre, unidad y stock serán públicos.
+  Para explosivos y detonadores usa <em>Solo disponibilidad</em> o no los muestres.
+</div>
+
+<form method="post" enctype="multipart/form-data" class="card card-body" style="max-width: 760px;">
+  {% csrf_token %}
+    {% if form.instance.imagen %}
+  <div class="mb-3">
+    <label class="form-label">Imagen actual</label>
+    <div><img src="{{ form.instance.imagen.url }}" alt="" class="img-thumbnail" style="max-width: 240px;"></div>
+  </div>
+  {% endif %}
+  {% for campo in form %}{% include 'publico/panel/_campo.html' %}{% endfor %}
+  <div class="d-flex gap-2">
+    <button type="submit" class="btn btn-primary"><i class="bi bi-check-circle-fill me-1"></i>Guardar</button>
+    <a href="{% url 'publico_panel:categorias' %}" class="btn btn-outline-secondary">Cancelar</a>
+  </div>
+</form>
+{% endblock %}

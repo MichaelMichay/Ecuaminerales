@@ -39,6 +39,7 @@ INSTALLED_APPS = [
     'despachos',
     'polvorin',
     'guardias',
+    'publico',
 ]
 
 MIDDLEWARE = [
@@ -115,10 +116,12 @@ STATICFILES_DIRS = [] if getattr(sys, 'frozen', False) else [
 
 STATIC_ROOT = RESOURCE_DIR / 'staticfiles'
 
+MEDIA_URL = 'media/'
+MEDIA_ROOT = BASE_DIR / 'media'
+
 STORAGES = {
-    "staticfiles": {
-        "BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage",
-    },
+    "default": {"BACKEND": "django.core.files.storage.FileSystemStorage"},
+    "staticfiles": {"BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage"},
 }
 
 AUTH_USER_MODEL = 'usuarios.Usuario'

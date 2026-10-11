@@ -1,0 +1,16 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="mb-3">
+  <h3 class="mb-0">{{ titulo }}</h3>
+  <small class="text-muted">Si pones una fecha futura, se publicará ese día.</small>
+</div>
+
+<form method="post" class="card card-body" style="max-width: 760px;">
+  {% csrf_token %}
+  {% for campo in form %}{% include 'publico/panel/_campo.html' %}{% endfor %}
+  <div class="d-flex gap-2">
+    <button type="submit" class="btn btn-primary"><i class="bi bi-check-circle-fill me-1"></i>Guardar</button>
+    <a href="{% url 'publico_panel:comunicados' %}" class="btn btn-outline-secondary">Cancelar</a>
+  </div>
+</form>
+{% endblock %}

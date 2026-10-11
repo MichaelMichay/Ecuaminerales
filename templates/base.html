@@ -1,19 +1,22 @@
-{%  load static %}
+{% load static %}
 
 <!DOCTYPE html>
 <html lang="es">
   <head>
     <meta charset="UTF-8" />
+
     <title>ECUMINERALES</title>
     <meta name="viewport" content="width=device-width, initial-scale=1" />
 
+    {% load static %}
+
+    <link rel="icon" type="image/png" href="{% static 'publico/img/favicon.png' %}?v=2" />
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.7/dist/css/bootstrap.min.css" rel="stylesheet" />
     <link rel="stylesheet" href="{% static 'css/estilos.css' %}" />
     <link rel="stylesheet" href="{% static 'css/menu_hamburguesa.css' %}" />
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" />
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" />
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" />   
   </head>
 
   <body>
@@ -26,14 +29,33 @@
           <h5>ECUMINERALES</h5>
           <small>Gestión de Explosivos v1.0</small>
         </div>
-        <hr>
+        <hr />
         <nav class="menu">
           {% if request.user.rol.nombre_rol == 'Administrador' %}
             <a href="{% url 'dashboard' %}">
               <i class="bi bi-house-door-fill me-2"></i>
               INICIO
             </a>
+            <a data-bs-toggle="collapse" href="#menuPublico" role="button">
+              <i class="bi bi-globe2 me-2"></i>
+              PÁGINA PÚBLICA ▾
+            </a>
 
+            <div class="collapse submenu" id="menuPublico">
+              <a href="{% url 'publico_panel:comunicados' %}">
+                <i class="bi bi-megaphone-fill me-2"></i>
+                Comunicados
+              </a>
+
+              <a href="{% url 'publico_panel:categorias' %}">
+                <i class="bi bi-eye-fill me-2"></i>
+                Categorías visibles
+              </a>
+              <a href="{% url 'publico_panel:imagenes' %}">
+                <i class="bi bi-images me-2"></i>
+                Imágenes de productos
+              </a>
+            </div>
             <a data-bs-toggle="collapse" href="#gestionGeneral" role="button">
               <i class="bi bi-gear-fill me-2"></i>
               GESTIÓN DE ACCESOS ▾
@@ -99,34 +121,26 @@
                 Polvorín
               </a>
             </div>
-<!-- =====================================================
+            <!--   =====================================================
      GESTIÓN DE GUARDIAS
-===================================================== -->
+=====================================================   -->
 
-<a data-bs-toggle="collapse"
-   href="#menuGuardias"
-   role="button"
-   aria-expanded="false"
-   aria-controls="menuGuardias">
+            <a data-bs-toggle="collapse" href="#menuGuardias" role="button" aria-expanded="false" aria-controls="menuGuardias">
+              <i class="bi bi-cash-coin me-2"></i>
+              GUARDIAS ▾
+            </a>
 
-  <i class="bi bi-cash-coin me-2"></i>
-  GUARDIAS ▾
+            <div class="collapse submenu" id="menuGuardias">
+              <a href="{% url 'guardias_actividades' %}">
+                <i class="bi bi-currency-dollar me-2"></i>
+                Actividades y Tarifas
+              </a>
 
-</a>
-
-<div class="collapse submenu" id="menuGuardias">
-
-  <a href="{% url 'guardias_actividades' %}">
-    <i class="bi bi-currency-dollar me-2"></i>
-    Actividades y Tarifas
-  </a>
-
-  <a href="{% url 'guardias_registros' %}">
-    <i class="bi bi-clipboard-check me-2"></i>
-    Registro de Actividades
-  </a>
-
-</div>
+              <a href="{% url 'guardias_registros' %}">
+                <i class="bi bi-clipboard-check me-2"></i>
+                Registro de Actividades
+              </a>
+            </div>
             <a data-bs-toggle="collapse" href="#menuControl" role="button">
               <i class="bi bi-bar-chart-fill me-2"></i>
               CONTROL ▾
@@ -203,12 +217,12 @@
             MI PERFIL
           </a>
           <a href="{% url 'mis_ingresos' %}">
-    <i class="bi bi-cash-stack me-2"></i>
-    MIS INGRESOS
-</a>
+            <i class="bi bi-cash-stack me-2"></i>
+            MIS INGRESOS
+          </a>
           <!-- CERRAR SESIÓN -->
           <div class="logout-btn">
-            <a href="{% url 'logout' %}">
+            <a href="{% url 'publico:inicio' %}">
               <i class="bi bi-box-arrow-right me-2"></i>
               CERRAR SESIÓN
             </a>
@@ -220,18 +234,16 @@
         <header class="topbar">
           <div class="d-flex align-items-center gap-2">
             <!-- ☰ Botón hamburguesa: solo visible en celular (<768px) -->
-            <button class="btn-hamburguesa" id="btnHamburguesa" type="button" aria-label="Abrir menú">
-              <i class="bi bi-list"></i>
-            </button>
+            <button class="btn-hamburguesa" id="btnHamburguesa" type="button" aria-label="Abrir menú"><i class="bi bi-list"></i></button>
 
-           <div>
-            <h4>ECUMINERALES</h4>
+            <div>
+              <h4>ECUMINERALES</h4>
 
-            <span>
+              <span>
                 {{ request.user.first_name }}
                 {{ request.user.last_name }}
-            </span>
-        </div>
+              </span>
+            </div>
           </div>
 
           <div class="user-box d-flex align-items-center gap-3">
@@ -335,17 +347,17 @@
       const btnHamburguesa = document.getElementById('btnHamburguesa')
       const sidebar = document.getElementById('sidebar')
       const overlay = document.getElementById('sidebarOverlay')
-
+      
       function abrirSidebar() {
         sidebar.classList.add('abierto')
         overlay.classList.add('activo')
       }
-
+      
       function cerrarSidebar() {
         sidebar.classList.remove('abierto')
         overlay.classList.remove('activo')
       }
-
+      
       if (btnHamburguesa) {
         btnHamburguesa.addEventListener('click', () => {
           if (sidebar.classList.contains('abierto')) {
@@ -355,12 +367,12 @@
           }
         })
       }
-
+      
       // Cierra el sidebar al tocar el fondo oscuro
       if (overlay) {
         overlay.addEventListener('click', cerrarSidebar)
       }
-
+      
       // Cierra el sidebar al hacer clic en un link del menú (solo en celular)
       document.querySelectorAll('.sidebar .menu a').forEach((link) => {
         link.addEventListener('click', () => {
@@ -369,7 +381,7 @@
           }
         })
       })
-
+      
       // Si cambian de tamaño de pantalla y pasa a >=768px, se asegura de resetear el estado
       window.addEventListener('resize', () => {
         if (window.innerWidth >= 768) {

@@ -1,0 +1,64 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+  <div>
+    <h3 class="mb-0">Comunicados</h3>
+    <small class="text-muted">Aparecen en el carrusel de la página pública.</small>
+  </div>
+  <div class="d-flex gap-2">
+    
+    <a href="{% url 'publico_panel:comunicado_crear' %}" class="btn btn-primary">
+      <i class="bi bi-plus-circle-fill me-1"></i>Nuevo comunicado
+    </a>
+  </div>
+</div>
+
+<div class="table-responsive">
+  <table class="table table-hover align-middle">
+    <thead>
+      <tr><th>Título</th><th>Fecha</th><th>Estado</th><th>Acciones</th></tr>
+    </thead>
+    <tbody>
+      {% for c in page_obj %}
+      <tr>
+        <td>{{ c.titulo }}</td>
+        <td>{{ c.fecha_publicacion|date:"d/m/Y" }}</td>
+        <td>
+          {% if not c.publicado %}
+            <span class="badge bg-secondary">Oculto</span>
+          {% elif c.fecha_publicacion > hoy %}
+            <span class="badge bg-warning text-dark">Programado</span>
+          {% else %}
+            <span class="badge bg-success">Publicado</span>
+          {% endif %}
+        </td>
+        <td>
+          <div class="d-flex gap-1">
+            <a href="{% url 'publico_panel:comunicado_editar' c.pk %}" class="btn btn-warning btn-sm" title="Editar">
+              <i class="bi bi-pencil-fill"></i>
+            </a>
+            <form method="post" action="{% url 'publico_panel:comunicado_eliminar' c.pk %}"
+                  onsubmit="return confirm('¿Eliminar este comunicado?');">
+              {% csrf_token %}
+              <button type="submit" class="btn btn-danger btn-sm" title="Eliminar">
+                <i class="bi bi-trash-fill"></i>
+              </button>
+            </form>
+          </div>
+        </td>
+      </tr>
+      {% empty %}
+      <tr><td colspan="4" class="text-center text-muted py-4">Todavía no hay comunicados.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+
+{% if page_obj.has_other_pages %}
+<nav class="d-flex justify-content-center gap-2 mt-3">
+  {% if page_obj.has_previous %}<a class="btn btn-outline-primary btn-sm" href="?page={{ page_obj.previous_page_number }}">‹ Anterior</a>{% endif %}
+  <span class="align-self-center small text-muted">Página {{ page_obj.number }} de {{ page_obj.paginator.num_pages }}</span>
+  {% if page_obj.has_next %}<a class="btn btn-outline-primary btn-sm" href="?page={{ page_obj.next_page_number }}">Siguiente ›</a>{% endif %}
+</nav>
+{% endif %}
+{% endblock %}
