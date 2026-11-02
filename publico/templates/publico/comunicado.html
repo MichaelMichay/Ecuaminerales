@@ -6,10 +6,14 @@
   <div></div>
 {% endblock %}
 {% block content %}
+   {% if c.documento and c.documento.publicado %}
+  <h2 class="anexo-t">Anexo</h2>
+  <div class="docs">{% with d=c.documento %}{% include "publico/_doc_card.html" %}{% endwith %}</div>
+ {% endif %}
   <article class="blk detalle">
     <a class="link" href="{% url 'publico:inicio' %}#comunicados">← Volver</a>
     <span class="tag">Comunicado · {{ c.fecha_publicacion|date:'d/m/Y' }}</span>
-    <h1>{{ c.titulo }}</h1>
+<td>{{ c.titulo }}{% if c.documento %} <i class="bi bi-paperclip text-muted" title="Con documento anexo"></i>{% endif %}</td>
     <p class="lead">{{ c.resumen }}</p>
     {% if c.contenido %}
       <div class="cuerpo">{{ c.contenido|linebreaks }}</div>

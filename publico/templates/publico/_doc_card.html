@@ -1,0 +1,12 @@
+<div class="doc">
+  <div class="doc-ico" aria-hidden="true">PDF</div>
+  <div class="doc-b">
+    <h3>{{ d.titulo }}</h3>
+    {% if d.descripcion %}<p>{{ d.descripcion }}</p>{% endif %}
+    <small>{{ d.fecha|date:"d/m/Y" }} · {{ d.tamano|filesizeformat }}</small>
+    <div class="doc-acts">
+      <a class="btn-doc" href="{% url 'publico:documento_ver' d.pk %}" target="_blank" rel="noopener">Ver</a>
+      <a class="btn-doc sec" href="{% url 'publico:documento_descargar' d.pk %}">Descargar</a>
+    </div>
+  </div>
+</div>

@@ -28,10 +28,8 @@ urlpatterns = [
     path('reportes/', include('reportes.urls')),
     path('polvorin/', include('polvorin.urls')), 
       
-     path('', include('publico.urls')),
+    path('', include('publico.urls')),
     path('sistema/pagina-publica/', include('publico.urls_panel')),   # ← nueva
-    path('sistema/', include('usuarios.urls')),
-    
     path('sistema/', include('usuarios.urls')),
     path('guardias/', include('guardias.urls')),
     

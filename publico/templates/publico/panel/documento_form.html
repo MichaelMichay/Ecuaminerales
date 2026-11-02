@@ -1,0 +1,24 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="mb-3">
+  <h3 class="mb-0">{% if form.instance.pk %}Editar documento{% else %}Nuevo documento{% endif %}</h3>
+  <small class="text-muted">Solo PDF, máximo 10 MB.</small>
+</div>
+
+<form method="post" enctype="multipart/form-data" class="card card-body" style="max-width: 760px;">
+  {% csrf_token %}
+  {% if form.instance.pk and form.instance.archivo %}
+  <div class="mb-3">
+    <label class="form-label">Archivo actual</label>
+    <div><a href="{% url 'publico_panel:documento_vista' form.instance.pk %}" target="_blank">
+      <i class="bi bi-file-earmark-pdf-fill text-danger me-1"></i>Abrir PDF ({{ form.instance.tamano|filesizeformat }})</a>
+      <small class="text-muted d-block">Si eliges otro archivo abajo, reemplazará a este.</small></div>
+  </div>
+  {% endif %}
+  {% for campo in form %}{% include 'publico/panel/_campo.html' %}{% endfor %}
+  <div class="d-flex gap-2">
+    <button type="submit" class="btn btn-primary"><i class="bi bi-check-circle-fill me-1"></i>Guardar</button>
+    <a href="{% url 'publico_panel:documentos' %}" class="btn btn-outline-secondary">Cancelar</a>
+  </div>
+</form>
+{% endblock %}

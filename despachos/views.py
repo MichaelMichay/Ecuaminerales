@@ -1020,9 +1020,29 @@ TIPO_MOVIMIENTO_ENTRADA = 'ENTRADA'
 
 
 PRODUCTOS_EXPLOSIVOS = [
-    {'nombre_insumo': 'FULMINANTE', 'nombre': 'FULMINANTE', 'color': COLOR_GRIS_GRUPO},
-    {'nombre_insumo': 'EMULNOR', 'nombre': 'EMULNOR', 'color': COLOR_CREMA_GRUPO},
-    {'nombre_insumo': 'MECHA_NEGRA', 'nombre': 'MECHA_NEGRA', 'color': COLOR_VERDE_GRUPO},
+    {
+        'nombre_insumo': 'FULMINANTE',
+        'nombre': 'FULMINANTE',
+        'color': COLOR_GRIS_GRUPO,
+    },
+    {
+            'nombre_insumo': 'RIODIN',
+            'nombre': 'RIODIN',
+            'color': COLOR_CREMA_GRUPO,
+        },
+    {
+        'nombre_insumo': 'EMULNOR',
+        'nombre': 'EMULNOR',
+        'color': COLOR_CREMA_GRUPO,
+    },
+    {
+        'nombre_insumo': 'MECHA_NEGRA',
+        'nombre': 'MECHA NEGRA',
+        'color': COLOR_VERDE_GRUPO,
+    },
+    
+    
+   
 ]
 
 MOVIMIENTOS_POR_DIA = 7  

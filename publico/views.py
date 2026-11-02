@@ -2,9 +2,9 @@ from django.conf import settings
 from django.shortcuts import get_object_or_404, render, resolve_url
 
 from inventario.models import CategoriaInsumo, Insumo
+from django.http import FileResponse, Http404
 
-from .models import AjusteCategoria, Comunicado, Producto
-from .models import AjusteCategoria, Comunicado, ImagenInsumo, Producto
+from .models import AjusteCategoria, Comunicado,Documento, ImagenInsumo, Producto
 from django.core.files.storage import default_storage
 def _ctx():
     return {'login_url': resolve_url(settings.LOGIN_URL)}
@@ -81,10 +81,34 @@ def inicio(request):
     ctx = _ctx()
     ctx['comunicados'] = Comunicado.objects.visibles()[:5]
     ctx['catalogo'] = _catalogo()
+    ctx['documentos'] = Documento.objects.visibles()[:12]
     return render(request, 'publico/inicio.html', ctx)
 
 
 def comunicado(request, pk):
     ctx = _ctx()
-    ctx['c'] = get_object_or_404(Comunicado.objects.visibles(), pk=pk)
+    ctx['c'] = get_object_or_404(
+        Comunicado.objects.visibles().select_related('documento'), pk=pk)
     return render(request, 'publico/comunicado.html', ctx)
+
+
+def servir_pdf(doc, descargar):
+    """Entrega el PDF: en el visor del navegador (ver) o como descarga."""
+    try:
+        archivo = doc.archivo.open('rb')
+    except (FileNotFoundError, ValueError):
+        raise Http404('El archivo no está disponible.')
+    resp = FileResponse(archivo, content_type='application/pdf',
+                        as_attachment=descargar, filename=doc.nombre_descarga())
+    resp['X-Content-Type-Options'] = 'nosniff'
+    return resp
+
+
+def documento_ver(request, pk):
+    doc = get_object_or_404(Documento.objects.visibles(), pk=pk)
+    return servir_pdf(doc, descargar=False)
+
+
+def documento_descargar(request, pk):
+    doc = get_object_or_404(Documento.objects.visibles(), pk=pk)
+    return servir_pdf(doc, descargar=True)

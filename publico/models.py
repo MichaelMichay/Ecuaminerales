@@ -5,7 +5,8 @@ from django.utils import timezone
 from django.db import models, transaction
 from django.db.models.signals import post_delete
 from django.dispatch import receiver
-
+from django.utils.text import slugify
+from .almacen import almacen_documentos
 
 class ComunicadoQuerySet(models.QuerySet):
     def visibles(self):
@@ -15,6 +16,10 @@ class ComunicadoQuerySet(models.QuerySet):
 
 
 class Comunicado(models.Model):
+    documento = models.ForeignKey(
+        'Documento', null=True, blank=True, on_delete=models.SET_NULL,
+        related_name='comunicados', verbose_name='documento anexo',
+        help_text='Opcional. Primero sube el PDF en "Documentos" y luego elígelo aquí.')       
     titulo = models.CharField('título', max_length=150)
     resumen = models.CharField(
         'resumen', max_length=220,
@@ -130,4 +135,41 @@ def borrar_archivo_de_imagen(sender, instance, **kwargs):
     nombre = instance.imagen.name
     if nombre:
         almacen = instance.imagen.storage
+        transaction.on_commit(lambda: almacen.delete(nombre))
+class DocumentoQuerySet(models.QuerySet):
+    def visibles(self):
+        return self.filter(publicado=True)
+
+
+class Documento(models.Model):
+    titulo = models.CharField('título', max_length=120)
+    descripcion = models.CharField('descripción', max_length=200, blank=True)
+    archivo = models.FileField('archivo PDF', upload_to='', storage=almacen_documentos)
+    tamano = models.PositiveIntegerField('tamaño (bytes)', default=0, editable=False)
+    fecha = models.DateField('fecha del documento', default=timezone.localdate)
+    orden = models.PositiveSmallIntegerField('orden', default=0,
+                                             help_text='Número menor aparece primero.')
+    publicado = models.BooleanField('publicado', default=True)
+    creado = models.DateTimeField(auto_now_add=True)
+
+    objects = DocumentoQuerySet.as_manager()
+
+    class Meta:
+        verbose_name = 'documento'
+        verbose_name_plural = 'documentos'
+        ordering = ['orden', '-fecha', '-id']
+
+    def __str__(self):
+        return self.titulo
+
+    def nombre_descarga(self):
+        return (slugify(self.titulo)[:80] or 'documento') + '.pdf'
+
+
+@receiver(post_delete, sender=Documento)
+def borrar_archivo_de_documento(sender, instance, **kwargs):
+    """Al borrar el documento se borra también su PDF del disco."""
+    nombre = instance.archivo.name
+    if nombre:
+        almacen = instance.archivo.storage
         transaction.on_commit(lambda: almacen.delete(nombre))

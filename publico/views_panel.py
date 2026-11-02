@@ -18,9 +18,9 @@ from usuarios.decorators import rol_requerido
 from .forms import AjusteCategoriaForm, ComunicadoForm
 from .models import AjusteCategoria, Comunicado
 from inventario.models import CategoriaInsumo, Insumo
-
-from .forms import AjusteCategoriaForm, ComunicadoForm, ImagenInsumoForm
-from .models import AjusteCategoria, Comunicado, ImagenInsumo
+from .views import servir_pdf
+from .forms import AjusteCategoriaForm, ComunicadoForm, DocumentoForm, ImagenInsumoForm
+from .models import AjusteCategoria, Comunicado,Documento, ImagenInsumo
 
 def solo_admin(vista):
     return login_required(rol_requerido(['Administrador'])(vista))
@@ -191,3 +191,63 @@ def insumo_imagen(request, pk):
         messages.error(request, 'No se pudo guardar. Revisa la imagen.')
     return render(request, 'publico/panel/insumo_imagen_form.html',
                   {'form': form, 'insumo': insumo})
+
+# ------------------------------------------------------------------ documentos PDF
+@solo_admin
+def documentos(request):
+    page = Paginator(Documento.objects.all(), 10).get_page(request.GET.get('page'))
+    return render(request, 'publico/panel/documentos.html', {'page_obj': page})
+
+
+@solo_admin
+def documento_crear(request):
+    es_post = request.method == 'POST'
+    form = DocumentoForm(request.POST if es_post else None,
+                         request.FILES if es_post else None)
+    if es_post and form.is_valid():
+        d = form.save()
+        _auditar(request, 'DOCUMENTO PÁGINA PÚBLICA',
+                 f'{request.user.username} subió el documento "{d.titulo}".')
+        messages.success(request, 'Documento guardado correctamente.')
+        return redirect('publico_panel:documentos')
+    if es_post:
+        messages.error(request, 'No se pudo guardar. Revisa los datos.')
+    return render(request, 'publico/panel/documento_form.html',
+                  {'form': form, 'titulo': 'Nuevo documento'})
+
+
+@solo_admin
+def documento_editar(request, pk):
+    d = get_object_or_404(Documento, pk=pk)
+    es_post = request.method == 'POST'
+    form = DocumentoForm(request.POST if es_post else None,
+                         request.FILES if es_post else None, instance=d)
+    if es_post and form.is_valid():
+        form.save()
+        _auditar(request, 'DOCUMENTO PÁGINA PÚBLICA',
+                 f'{request.user.username} modificó el documento "{d.titulo}" '
+                 f'(publicado={d.publicado}).')
+        messages.success(request, 'Documento actualizado correctamente.')
+        return redirect('publico_panel:documentos')
+    if es_post:
+        messages.error(request, 'No se pudo guardar. Revisa los datos.')
+    return render(request, 'publico/panel/documento_form.html',
+                  {'form': form, 'titulo': 'Editar documento', 'doc': d})
+
+
+@solo_admin
+@require_POST
+def documento_eliminar(request, pk):
+    d = get_object_or_404(Documento, pk=pk)
+    titulo = d.titulo
+    d.delete()
+    _auditar(request, 'DOCUMENTO PÁGINA PÚBLICA',
+             f'{request.user.username} eliminó el documento "{titulo}".')
+    messages.success(request, 'Documento eliminado correctamente.')
+    return redirect('publico_panel:documentos')
+
+
+@solo_admin
+def documento_vista(request, pk):
+    """Vista previa para el administrador, aunque el documento esté oculto."""
+    return servir_pdf(get_object_or_404(Documento, pk=pk), descargar=False)

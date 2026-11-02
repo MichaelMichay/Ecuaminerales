@@ -14,4 +14,10 @@ urlpatterns = [
     path('categorias/<int:pk>/alternar/<str:campo>/', v.categoria_alternar, name='categoria_alternar'),
     path('imagenes/', v.insumos_imagenes, name='imagenes'),
     path('imagenes/<int:pk>/', v.insumo_imagen, name='insumo_imagen'),
+    path('documentos/', v.documentos, name='documentos'),
+    path('documentos/nuevo/', v.documento_crear, name='documento_crear'),
+    path('documentos/<int:pk>/editar/', v.documento_editar, name='documento_editar'),
+    path('documentos/<int:pk>/eliminar/', v.documento_eliminar, name='documento_eliminar'),
+    path('documentos/<int:pk>/ver/', v.documento_vista, name='documento_vista'),
+
 ]

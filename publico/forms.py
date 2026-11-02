@@ -6,8 +6,10 @@ from django.core.files.base import ContentFile
 from django.core.files.uploadedfile import UploadedFile
 from PIL import Image, ImageOps, UnidentifiedImageError
 
-from .models import AjusteCategoria, Comunicado, ImagenInsumo
+from .models import AjusteCategoria, Comunicado, ImagenInsumo,Documento
 
+MAX_PDF_BYTES = 10 * 1024 * 1024        # peso máximo del PDF subido
+MAX_PDF = 10 * 1024 * 1024         # peso máximo de un documento PDF
 MAX_BYTES = 5 * 1024 * 1024        # peso máximo del archivo subido
 MAX_PIXELES = 40_000_000           # protege contra imágenes "bomba"
 MAX_LADO = 1000                    # se reduce a 1000 px como máximo
@@ -94,8 +96,9 @@ class ImagenModelForm(forms.ModelForm):
 class ComunicadoForm(forms.ModelForm):
     class Meta:
         model = Comunicado
-        fields = ['titulo', 'resumen', 'contenido', 'fecha_publicacion', 'publicado']
+        fields = ['titulo', 'resumen', 'contenido', 'fecha_publicacion', 'documento', 'publicado']
         widgets = {
+            'documento': forms.Select(attrs={'class': 'form-select'}),
             'titulo': forms.TextInput(attrs={'class': 'form-control'}),
             'resumen': forms.Textarea(attrs={'class': 'form-control', 'rows': 2}),
             'contenido': forms.Textarea(attrs={'class': 'form-control', 'rows': 6}),
@@ -149,3 +152,59 @@ class ImagenInsumoForm(ImagenModelForm):
         if 'imagen' not in self.errors and not data.get('imagen') and not self._anterior:
             self.add_error('imagen', 'Selecciona una imagen.')
         return data
+
+class DocumentoForm(forms.ModelForm):
+    archivo = forms.FileField(
+        required=False, label='Archivo PDF',
+        help_text='Solo PDF, hasta 10 MB.',
+        widget=forms.FileInput(attrs={
+            'class': 'form-control', 'accept': 'application/pdf,.pdf'}))
+
+    class Meta:
+        model = Documento
+        fields = ['titulo', 'descripcion', 'archivo', 'fecha', 'orden', 'publicado']
+        widgets = {
+            'titulo': forms.TextInput(attrs={'class': 'form-control'}),
+            'descripcion': forms.TextInput(attrs={'class': 'form-control'}),
+            'fecha': forms.DateInput(
+                attrs={'class': 'form-control', 'type': 'date'}, format='%Y-%m-%d'),
+            'orden': forms.NumberInput(attrs={'class': 'form-control'}),
+            'publicado': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
+        }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        inst = self.instance
+        self._anterior = inst.archivo.name if inst.pk and inst.archivo else ''
+
+    def clean_archivo(self):
+        archivo = self.cleaned_data.get('archivo')
+        if isinstance(archivo, UploadedFile):          # llegó un archivo nuevo
+            if not archivo.name.lower().endswith('.pdf'):
+                raise forms.ValidationError('El archivo debe ser un PDF (.pdf).')
+            if archivo.size > MAX_PDF:
+                raise forms.ValidationError('El PDF pesa más de 10 MB.')
+            archivo.seek(0)
+            cabecera = archivo.read(1024)
+            archivo.seek(0)
+            if b'%PDF-' not in cabecera:               # no se confía en la extensión
+                raise forms.ValidationError('El archivo no es un PDF válido.')
+            archivo.name = f'{uuid.uuid4().hex}.pdf'   # nombre aleatorio en disco
+        return archivo
+
+    def clean(self):
+        data = super().clean()
+        if 'archivo' not in self.errors and not data.get('archivo') and not self._anterior:
+            self.add_error('archivo', 'Selecciona un archivo PDF.')
+        return data
+
+    def save(self, commit=True):
+        obj = super().save(commit=False)
+        nuevo = self.cleaned_data.get('archivo')
+        if isinstance(nuevo, UploadedFile):
+            obj.tamano = nuevo.size
+        if commit:
+            obj.save()
+            if self._anterior and obj.archivo.name != self._anterior:
+                obj.archivo.storage.delete(self._anterior)   # borra el PDF reemplazado
+        return obj
