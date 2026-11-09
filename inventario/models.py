@@ -1,6 +1,6 @@
 from django.db import models
 from usuarios.models import Usuario
-
+from django.utils import timezone
 
 class CategoriaInsumo(models.Model):
     nombre_categoria = models.CharField(max_length=100)
@@ -65,7 +65,7 @@ class MovimientoInventario(models.Model):
     stock_anterior = models.DecimalField(max_digits=10, decimal_places=2, default=0)
     stock_actual = models.DecimalField(max_digits=10, decimal_places=2, default=0)
     observacion = models.TextField(blank=True, null=True)
-    fecha_movimiento = models.DateTimeField(auto_now_add=True)
+    fecha_movimiento = models.DateTimeField(default=timezone.now)
 
     insumo = models.ForeignKey(Insumo, on_delete=models.CASCADE)
     usuario = models.ForeignKey(Usuario, on_delete=models.CASCADE)

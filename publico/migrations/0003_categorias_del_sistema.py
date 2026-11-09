@@ -6,9 +6,9 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('publico', '0002_categorias_productos'),
-        ('inventario', '__latest__'),
-    ]
+    ('publico', '0002_categorias_productos'),
+    ('inventario', '0006_movimientoinventario_despacho'),
+]
 
     operations = [
         migrations.DeleteModel(name='Producto'),

@@ -69,13 +69,31 @@
                     {% endif %}
                   </td>
 
-                  <td>
-                    <!-- Editar -->
-                    <a href="{% url 'editar_insumo' insumo.id %}" class="btn btn-sm btn-warning" title="Editar insumo"><i class="bi bi-pencil-fill"></i></a>
+                 <td>
 
-                    <!-- Eliminar -->
-                    <a href="{% url 'eliminar_insumo' insumo.id %}" class="btn btn-sm btn-danger" title="Eliminar insumo" onclick="confirmarEliminacion(event, this.href)"><i class="bi bi-trash-fill"></i></a>
-                  </td>
+    <!-- Agregar stock -->
+    <a href="{% url 'agregar_stock' insumo.id %}"
+       class="btn btn-sm btn-success"
+       title="Agregar stock">
+        <i class="bi bi-plus-circle-fill"></i>
+    </a>
+
+    <!-- Editar -->
+    <a href="{% url 'editar_insumo' insumo.id %}"
+       class="btn btn-sm btn-warning"
+       title="Editar insumo">
+        <i class="bi bi-pencil-fill"></i>
+    </a>
+
+    <!-- Eliminar -->
+    <a href="{% url 'eliminar_insumo' insumo.id %}"
+       class="btn btn-sm btn-danger"
+       title="Eliminar insumo"
+       onclick="confirmarEliminacion(event, this.href)">
+        <i class="bi bi-trash-fill"></i>
+    </a>
+
+</td>
                 </tr>
               {% empty %}
                 <tr>

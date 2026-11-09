@@ -1,0 +1,161 @@
+{% extends 'base.html' %}
+
+{% block content %}
+
+<div class="card shadow-sm">
+    <div class="card-body">
+
+        <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-4">
+            <div>
+                <h3 class="mb-1">Generar reporte semanal</h3>
+                <p class="text-muted mb-0">
+                    Selecciona los productos que deseas incluir en el reporte.
+                </p>
+            </div>
+
+            <a href="{% url 'despachos' %}" class="btn btn-outline-secondary">
+                <i class="bi bi-arrow-left"></i> Volver
+            </a>
+        </div>
+
+        <form method="GET" action="{% url 'reporte_despachos_pdf' %}" id="formReporte">
+
+            <div class="row mb-4">
+                <div class="col-md-4">
+                    <label class="form-label fw-semibold">Fecha de referencia</label>
+                    <input type="date"
+                           name="fecha"
+                           id="fechaReporte"
+                           class="form-control"
+                           value="{{ fecha }}"
+                           required>
+                    <small class="text-muted">
+                        El reporte incluirá de lunes a domingo de esa semana.
+                    </small>
+                </div>
+            </div>
+
+            <hr>
+
+            <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3">
+                <h5 class="mb-0">Productos disponibles</h5>
+
+                <div class="d-flex gap-2">
+                    <button type="button" class="btn btn-sm btn-outline-primary"
+                            onclick="seleccionarTodos(true)">
+                        Seleccionar todos
+                    </button>
+
+                    <button type="button" class="btn btn-sm btn-outline-secondary"
+                            onclick="seleccionarTodos(false)">
+                        Limpiar selección
+                    </button>
+                </div>
+            </div>
+
+            {% regroup insumos by categoria as grupos_categoria %}
+
+            {% for grupo in grupos_categoria %}
+            <div class="card mb-3 border">
+                <div class="card-header bg-light d-flex justify-content-between align-items-center">
+                    <strong>{{ grupo.grouper.nombre_categoria }}</strong>
+
+                    <button type="button"
+                            class="btn btn-sm btn-outline-primary"
+                            onclick="seleccionarCategoria('{{ forloop.counter }}', true)">
+                        Seleccionar categoría
+                    </button>
+                </div>
+
+                <div class="card-body">
+                    <div class="row">
+                        {% for insumo in grupo.list %}
+                        <div class="col-md-4 col-sm-6 mb-2">
+                            <div class="form-check">
+                                <input class="form-check-input producto-checkbox categoria-{{ forloop.parentloop.counter }}"
+                                       type="checkbox"
+                                       name="productos"
+                                       value="{{ insumo.id }}"
+                                       id="producto{{ insumo.id }}">
+
+                                <label class="form-check-label"
+                                       for="producto{{ insumo.id }}">
+                                    {{ insumo.nombre_insumo }}
+                                    <small class="text-muted">
+                                        ({{ insumo.unidad_medida }})
+                                    </small>
+                                </label>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+            {% empty %}
+            <div class="alert alert-warning">
+                No existen productos activos registrados.
+            </div>
+            {% endfor %}
+
+            <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mt-4">
+                <span class="text-muted" id="contadorProductos">
+                    0 productos seleccionados
+                </span>
+
+                <button type="submit" class="btn btn-danger" id="btnGenerar">
+                    <i class="bi bi-file-earmark-pdf-fill me-1"></i>
+                    Generar reporte PDF
+                </button>
+            </div>
+
+        </form>
+    </div>
+</div>
+
+<script>
+    function seleccionarTodos(estado) {
+        document.querySelectorAll('.producto-checkbox').forEach(input => {
+            input.checked = estado;
+        });
+
+        actualizarContador();
+    }
+
+    function seleccionarCategoria(numero, estado) {
+        document.querySelectorAll('.categoria-' + numero).forEach(input => {
+            input.checked = estado;
+        });
+
+        actualizarContador();
+    }
+
+    function actualizarContador() {
+        const seleccionados = document.querySelectorAll(
+            '.producto-checkbox:checked'
+        ).length;
+
+        document.getElementById('contadorProductos').textContent =
+            seleccionados + (seleccionados === 1
+                ? ' producto seleccionado'
+                : ' productos seleccionados');
+    }
+
+    document.querySelectorAll('.producto-checkbox').forEach(input => {
+        input.addEventListener('change', actualizarContador);
+    });
+
+    document.getElementById('formReporte').addEventListener('submit', function(e) {
+        const seleccionados = document.querySelectorAll(
+            '.producto-checkbox:checked'
+        ).length;
+
+        if (seleccionados === 0) {
+            e.preventDefault();
+            alert('Selecciona al menos un producto para generar el reporte.');
+        }
+    });
+
+    actualizarContador();
+</script>
+
+{% endblock %}

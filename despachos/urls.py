@@ -7,6 +7,11 @@ urlpatterns = [
     path('despachar/<int:id>/', views.despachar_orden, name='despachar_orden'),
     path('historial/', views.lista_despachos, name='despachos'),
     path('reporte/pdf/', views.reporte_ordenes_pdf, name='reporte_ordenes_pdf'),
+   path(
+    'despachos/reporte/seleccionar/',
+    views.seleccionar_reporte_semanal,
+    name='seleccionar_reporte_semanal'
+),
     path('despachos/reporte/pdf/', views.reporte_despachos_pdf, name='reporte_despachos_pdf'),
     path('panel-bodeguero/', views.panel_bodeguero, name='panel_bodeguero'),
     path('panel-bodeguero/aprobar/<int:id>/',views.aprobar_orden_bodeguero, name='aprobar_orden_bodeguero'),

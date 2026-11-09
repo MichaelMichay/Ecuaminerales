@@ -18,4 +18,9 @@ urlpatterns = [
     path('kardex/', views.kardex_inventario, name='kardex_inventario'),
     path('kardex/pdf/', views.kardex_pdf, name='kardex_pdf'),
     path('kardex/excel/', views.kardex_excel, name='kardex_excel'),
+    path(
+    'insumo/<int:insumo_id>/agregar-stock/',
+    views.agregar_stock,
+    name='agregar_stock'
+),
 ]

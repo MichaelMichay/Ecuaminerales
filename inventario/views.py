@@ -1,23 +1,37 @@
-from django.shortcuts import render, redirect
+import csv
+import os
+from datetime import datetime, time
+
+from django.conf import settings
+from django.contrib import messages
 from django.contrib.auth.decorators import login_required
+from django.core.paginator import Paginator
+from django.db import models, transaction
 from django.http import HttpResponse
-from django.db import models
-from .models import Insumo, CategoriaInsumo, LugarConsumo, MovimientoInventario
+from django.shortcuts import render, redirect, get_object_or_404
+from django.utils import timezone
+
 from reportlab.pdfgen import canvas
 from reportlab.lib.pagesizes import letter
-from .models import Insumo, CategoriaInsumo, LugarConsumo
-from .forms import InsumoForm, CategoriaInsumoForm, LugarConsumoForm
+from reportlab.lib import colors
+
+from .models import (
+    Insumo,
+    CategoriaInsumo,
+    LugarConsumo,
+    MovimientoInventario,
+)
+
+from .forms import (
+    InsumoForm,
+    CategoriaInsumoForm,
+    LugarConsumoForm,
+)
+
 from usuarios.decorators import rol_requerido
 from usuarios.models import Usuario
+
 from reportes.models import Notificacion, Auditoria
-from django.core.paginator import Paginator
-from django.contrib import messages
-import csv
-from reportlab.lib import colors
-from django.http import HttpResponse
-from django.conf import settings
-import os
-from datetime import datetime
 
 @login_required
 @rol_requerido(['Administrador', 'Bodeguero'])
@@ -889,3 +903,81 @@ def kardex_excel(request):
     wb.save(response)
 
     return response
+
+@login_required
+@rol_requerido(['Administrador', 'Bodeguero'])
+def agregar_stock(request, insumo_id):
+
+    insumo = get_object_or_404(Insumo, id=insumo_id)
+
+    if request.method == 'POST':
+
+        try:
+            cantidad = int(request.POST.get('cantidad'))
+            fecha = request.POST.get('fecha')
+            observacion = request.POST.get('observacion', '').strip()
+
+            if cantidad <= 0:
+                raise ValueError
+
+            if not fecha:
+                raise ValueError
+
+            fecha_ingreso = datetime.strptime(
+                fecha, '%Y-%m-%d'
+            ).date()
+
+            fecha_movimiento = timezone.make_aware(
+                datetime.combine(fecha_ingreso, time.min)
+            )
+
+            with transaction.atomic():
+
+                insumo = Insumo.objects.select_for_update().get(
+                    id=insumo_id
+                )
+
+                stock_anterior = insumo.stock
+
+                stock_nuevo = stock_anterior + cantidad
+
+                # Actualizar stock del producto
+                insumo.stock = stock_nuevo
+
+                insumo.save(update_fields=['stock'])
+
+                # Registrar movimiento de entrada
+                MovimientoInventario.objects.create(
+                    tipo_movimiento='ENTRADA',
+                    cantidad=cantidad,
+                    stock_anterior=stock_anterior,
+                    stock_actual=stock_nuevo,
+                    observacion=observacion,
+                    fecha_movimiento=fecha_movimiento,
+                    insumo=insumo,
+                    usuario=request.user,
+                    despacho=None
+                )
+
+            messages.success(
+                request,
+                f'Ingreso registrado correctamente. '
+                f'Nuevo stock: {stock_nuevo}.'
+            )
+
+            return redirect('/inventario/')
+        except (ValueError, TypeError):
+            messages.error(
+                request,
+                'Verifica que la cantidad y la fecha sean válidas.'
+            )
+
+    return render(
+    request,
+    'inventario/agregar_stock.html',
+    {
+        'insumo': insumo,
+        'fecha_actual': timezone.localdate().isoformat(),
+        'url_volver': '/inventario/'
+    }
+)
